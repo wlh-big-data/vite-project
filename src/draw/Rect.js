@@ -1,4 +1,5 @@
 import { Rect, FabricText } from 'fabric';
+import { Path, Point, Size } from 'paper';
 
 export default class LabeledRect extends Rect {
   constructor(options = {}) {
@@ -21,17 +22,23 @@ export default class LabeledRect extends Rect {
 
   _render(ctx) {
     super._render(ctx);
-    ctx.save();
+    // ctx.save();
     ctx.fillStyle = 'rgb(0,0,0)';
     ctx.font="16px Arial";
 
-    this.labelText._render.bind(this.labelText)(ctx);
-    // ctx.fillText(this.label, -this.width / 2, -this.height/2 + 16);
+    // this.labelText._render.bind(this.labelText)(ctx);
+    ctx.fillText(this.label, -this.width / 2, -this.height/2 + 16);
 
-    ctx.restore();
+    // ctx.restore();
     // this.labelText._render.bind(this.labelText)(ctx);
     // Update label text content and position
     
+  }
+
+  toPaperObject() {
+    console.log(this);
+    var square = new Path.Rectangle(new Point(this.left, this.top),  new Size(this.width, this.height));
+    return square;
   }
 
   // set(key, value) {

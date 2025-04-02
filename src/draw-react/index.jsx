@@ -45,17 +45,42 @@ export default function Draw(props) {
           })
         }}>获取所有物体</button>
         <button onClick={() => {
-          window.editor.canvas.getActiveObjects().forEach((item) => {
-            console.log(item);
+          editorRef.current.getSelection().forEach((item) => {
+            console.log(item.toPaperObject());
           })
         }}>获取选中物体</button>
         <button onClick={() => {
-          console.log(window.editor.canvas.toJSON());
-        }}>toJSON</button>
+          const selections = editorRef.current.getSelection();
+          console.log(selections);
+          if(selections.length == 2) {
+            const left = selections[0].toPaperObject();
+            const right = selections[1].toPaperObject();
+            const newObject = left.intersect(right);
+            console.log(newObject);
+            if(newObject) {
+              editorRef.current.addPath(left, right, newObject);
+            }
+          }
+        }}>交集</button>
+        <button onClick={() => {
+          const selections = editorRef.current.getSelection();
+          console.log(selections);
+          if(selections.length == 2) {
+            const left = selections[0].toPaperObject();
+            const right = selections[1].toPaperObject();
+            const newObject = left.unite(right);
+            editorRef.current.addPath(selections[0], selections[1], newObject.pathData);
+          }
+        }}>并集</button>
+        <button>差集</button>
+      
       </div>
+      
       <div className={"canvasDom"} ref={canvasDomRef}>
         <canvas ref={canvasRef} />
+        <canvas className={"hide_canvas"} id="noshowCanvas"></canvas>
       </div>
+
     </div>
   )
 }

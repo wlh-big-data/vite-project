@@ -1,4 +1,5 @@
 import { Canvas, FabricImage, Rect, Ellipse, FabricObject, Polyline, Polygon, FabricText, controlsUtils, Group, Path } from "fabric";
+import paper from 'paper';
 import LabeledPolygon from './Polygon';
 import LabeledRect from './Rect';
 
@@ -39,7 +40,7 @@ export default class Editor {
   // this.imgUrl = '';
   // this.readonly = true; 查看、编辑
   // createType = CREATE_TYPE.NONE;
-  // 
+  // selected = []; 选中的内容
 
   constructor({
     container,
@@ -55,16 +56,22 @@ export default class Editor {
     this.resize = this.resize.bind(this);
     this.drag = this.drag.bind(this);
     // this.drawRect = this.drawRect.bind(this);
-    this.drawPoly = this.drawPoly.bind(this);
+    // this.drawPoly = this.drawPoly.bind(this);
     this.keydown = this.keydown.bind(this);
     this.setCreateType = this.setCreateType.bind(this);
     this.setReadonly = this.setReadonly.bind(this);
-    this.drawEllipse = this.drawEllipse.bind(this);
+    // this.drawEllipse = this.drawEllipse.bind(this);
     
     this.getImageBounds = this.getImageBounds.bind(this);
     this.addMovementConstraints = this.addMovementConstraints.bind(this);
 
-    this.canvas = new Canvas(container.querySelector('canvas'));
+    const canvasDom = container.querySelector('canvas');
+    this.canvas = new Canvas(canvasDom);
+
+    const noshowCanvas = document.getElementById('noshowCanvas');
+
+
+    paper.setup(noshowCanvas);
     console.log('container', container.clientHeight, container.clientWidth);
 
     this.canvas.setDimensions({
@@ -73,7 +80,6 @@ export default class Editor {
     });
 
     this.zoom();
-    this.keydown();
 
     if (imgUrl) {
       this.setImage(imgUrl);
@@ -93,7 +99,80 @@ export default class Editor {
     this.endDrawingPoly = this.endDrawingPoly.bind(this);
     this.drawingPoly = this.drawingPoly.bind(this);
     this.selectObjects = this.selectObjects.bind(this);
+    this.getSelection = this.getSelection.bind(this);
+    this.addPath = this.addPath.bind(this);
+
+    document.addEventListener('keydown', this.keydown);
     this.selectObjects();
+
+    this.canvas.on('mouse:down', this.startDrawingRect);
+    this.canvas.on('mouse:move', this.drawingRect);
+    this.canvas.on('mouse:up', this.endDrawingRect);
+    this.canvas.on('mouse:down', this.startDrawingEllipse);
+    this.canvas.on('mouse:move', this.drawingEllipse);
+    this.canvas.on('mouse:up', this.endDrawingEllipse);
+    this.canvas.on('mouse:down', this.startDrawingPoly);
+    this.canvas.on('mouse:move', this.drawingPoly);
+    this.canvas.on('mouse:dblclick', this.endDrawingPoly);
+    this.canvas.on('selection:created', (options) => {
+      console.log('selection:created', options);
+      // this.setReadonly(true);
+      this.selected = [];
+      this.selected.push(...options.selected);
+    });
+
+
+    this.canvas.on('selection:updated', (options) => {
+      console.log('selection:updated', options);
+      // this.setReadonly(true);
+      this.selected.push(...options.selected);
+      options.deselected.forEach((item) => {
+        if (this.selected.indexOf(item) > -1) {
+          this.selected.splice(this.selected.indexOf(item), 1);
+        }
+      })
+    });
+    this.canvas.on('selection:cleared', (options) => {
+      console.log('selection:cleared', options);
+      this.selected = [];
+      // this.setReadonly(false);
+    });
+    
+  }
+
+  getSelection() {
+    return this.selected;
+  }
+
+  addPath(left, right, pathData) {
+    debugger;
+    this.canvas.remove(left);
+    this.canvas.remove(right);
+    
+    const path = new Path(pathData, {
+      left: {
+        x: Math.min(left.left, right.left),
+        y: Math.min(left.top, right.top),
+      },
+      right: {
+        x: Math.max(left.right, right.right),
+        y: Math.max(left.bottom, right.bottom),
+      }
+    });
+    this.canvas.add(path);
+  }
+
+  destroy() {
+    document.removeEventListener('keydown', this.keydown);
+    this.canvas.off('mouse:down', this.startDrawingRect);
+    this.canvas.off('mouse:move', this.drawingRect);
+    this.canvas.off('mouse:up', this.endDrawingRect);
+    this.canvas.off('mouse:down', this.startDrawingEllipse);
+    this.canvas.off('mouse:move', this.drawingEllipse);
+    this.canvas.off('mouse:up', this.endDrawingEllipse);
+    this.canvas.off('mouse:down', this.startDrawingPoly);
+    this.canvas.off('mouse:move', this.drawingPoly);
+    this.canvas.off('mouse:up', this.endDrawingPoly);
     
   }
 
@@ -205,50 +284,37 @@ export default class Editor {
     console.log('createType', createType);
     this.createType = createType;
     this.readonly = false;
-    this.canvas.off('mouse:down', this.startDrawingRect);
-    this.canvas.off('mouse:move', this.drawingRect);
-    this.canvas.off('mouse:up', this.endDrawingRect);
-    this.canvas.off('mouse:down', this.startDrawingEllipse);
-    this.canvas.off('mouse:move', this.drawingEllipse);
-    this.canvas.off('mouse:up', this.endDrawingEllipse);
-    this.canvas.off('mouse:down', this.startDrawingPoly);
-    this.canvas.off('mouse:move', this.drawingPoly);
-    this.canvas.off('mouse:up', this.endDrawingPoly);
-    if (createType === CREATE_TYPE.RECT) {
-      this.canvas.on('mouse:down', this.startDrawingRect);
-      this.canvas.on('mouse:move', this.drawingRect);
-      this.canvas.on('mouse:up', this.endDrawingRect);
-    } else if( createType === CREATE_TYPE.ELLIPSE) {
-      this.canvas.on('mouse:down', this.startDrawingEllipse);
-      this.canvas.on('mouse:move', this.drawingEllipse);
-      this.canvas.on('mouse:up', this.endDrawingEllipse);
-    } else if (createType === CREATE_TYPE.POLYGON) {
-      console.log('create type', createType);
-      this.canvas.on('mouse:down', this.startDrawingPoly);
-      this.canvas.on('mouse:move', this.drawingPoly);
-      this.canvas.on('mouse:dblclick', this.endDrawingPoly);
-    }
   }
 
   selectObjects() {
-    this.canvas.on('selection:created', (options) => {
-      this.setReadonly(true);
-    });
-    this.canvas.on('selection:created', (options) => {
-      this.setReadonly(false);
-    });
+    
   }
 
-  keydown() {
-    this.canvas.on('keydown', (e) => {
-      console.log('keydown', e);
-      if (e.key === 'Escape') {
-        this.canvas.setActiveObject(null);
+  keydown(e) {
+    // console.log('e', e);
+
+    if (e.key === 'Escape') {
+      this.cancelDrawingPoly();
+      // this.canvas.setActiveObject(null);
+    }
+  }
+
+  cancelDrawingPoly() {
+    if(this.createType === CREATE_TYPE.POLYGON && this.isDrawing) {
+      if(this.polygonPoints.length > 2) {
+        this.polygonPoints.pop();
       }
-    });
+      this.polygonPoints.slice(-1);
+      this.isDrawing = false;
+      this.canvas.remove(this.currentShape);
+      this.currentShape = null;
+    }
   }
 
   startDrawingEllipse(options) {
+    if(this.createType !== CREATE_TYPE.ELLIPSE) {
+      return;
+    }
     console.log('startDrawingEllipse', options);
     
     const imgBounds = this.getImageBounds();
@@ -274,6 +340,9 @@ export default class Editor {
   }
 
   drawingEllipse(options) {
+    if(this.createType !== CREATE_TYPE.ELLIPSE) {
+      return;
+    }
     const { isDrawing, startPoint, currentShape, canvas } = this;
     if (isDrawing) {
       console.log('drawingEllipse', options);
@@ -318,6 +387,9 @@ export default class Editor {
   }
 
   endDrawingEllipse(options) {
+    if(this.createType !== CREATE_TYPE.ELLIPSE) {
+      return;
+    }
     console.log('endDrawingEllipse', options);
     this.isDrawing = false;
     if(this.currentShape.rx === 0 || this.currentShape.ry === 0) {
@@ -328,6 +400,9 @@ export default class Editor {
   }
 
   startDrawingPoly(options) {
+    if(this.createType !== CREATE_TYPE.POLYGON) {
+      return;
+    }
     const { canvas } = this;
     console.log('click', options.pointer);
     const imgBounds = this.getImageBounds();
@@ -360,6 +435,9 @@ export default class Editor {
   }
 
   drawingPoly(options) {
+    if(this.createType !== CREATE_TYPE.POLYGON) {
+      return;
+    }
     const { isDrawing, polygonPoints, polygon, canvas } = this;
     if (isDrawing) {
       const point = options.scenePoint;
@@ -371,6 +449,9 @@ export default class Editor {
   }
 
   endDrawingPoly(options) {
+    if(this.createType !== CREATE_TYPE.POLYGON) {
+      return;
+    }
     const { isDrawing, polygonPoints, polygon, canvas } = this;
     if (isDrawing) {
       // 确保至少有三个点才能形成多边形
@@ -394,155 +475,157 @@ export default class Editor {
         canvas.add(polygonObject);
         // 设置新的 Polygon 为活动对象
         canvas.setActiveObject(polygonObject);
+      } else {
+        canvas.remove(polygon);
       }
       this.isDrawing = false;
     }
   }
 
-  drawEllipse() {
+  // drawEllipse() {
 
-    let isDrawingEllipse = false;
-    let startPointEllipse;
-    let ellipse;
-    const { canvas, createType } = this;
+  //   let isDrawingEllipse = false;
+  //   let startPointEllipse;
+  //   let ellipse;
+  //   const { canvas, createType } = this;
 
-    canvas.on('mouse:down', function (options) {
+  //   canvas.on('mouse:down', function (options) {
 
-      isDrawingEllipse = true;
-      startPointEllipse = options.pointer;
-      ellipse = new Ellipse({
-        left: startPointEllipse.x,
-        top: startPointEllipse.y,
-        rx: 0,
-        ry: 0,
-        fill: 'yellow',
-        objectCaching: false,
-        stroke: 'lightgreen',
-        strokeWidth: 4,
-      });
-      canvas.add(ellipse);
-    });
+  //     isDrawingEllipse = true;
+  //     startPointEllipse = options.pointer;
+  //     ellipse = new Ellipse({
+  //       left: startPointEllipse.x,
+  //       top: startPointEllipse.y,
+  //       rx: 0,
+  //       ry: 0,
+  //       fill: 'yellow',
+  //       objectCaching: false,
+  //       stroke: 'lightgreen',
+  //       strokeWidth: 4,
+  //     });
+  //     canvas.add(ellipse);
+  //   });
 
-    canvas.on('mouse:move', function (options) {
-      if(createType !== CREATE_TYPE.Ellipse) {
-        return;
-      }
-      if (isDrawingEllipse) {
-        const pointer = options.pointer;
-        const dx = pointer.x - startPointEllipse.x;
-        const dy = pointer.y - startPointEllipse.y;
-        let rx = Math.abs(dx) / 2;
-        let ry = Math.abs(dy) / 2;
+  //   canvas.on('mouse:move', function (options) {
+  //     if(createType !== CREATE_TYPE.Ellipse) {
+  //       return;
+  //     }
+  //     if (isDrawingEllipse) {
+  //       const pointer = options.pointer;
+  //       const dx = pointer.x - startPointEllipse.x;
+  //       const dy = pointer.y - startPointEllipse.y;
+  //       let rx = Math.abs(dx) / 2;
+  //       let ry = Math.abs(dy) / 2;
 
-        if (options.e.shiftKey) {
-          // 按下 Shift 键，绘制正圆
-          const radius = Math.min(rx, ry);
-          rx = radius;
-          ry = radius;
-        }
+  //       if (options.e.shiftKey) {
+  //         // 按下 Shift 键，绘制正圆
+  //         const radius = Math.min(rx, ry);
+  //         rx = radius;
+  //         ry = radius;
+  //       }
 
-        ellipse.set({
-          rx: rx,
-          ry: ry,
-          left: startPointEllipse.x + Math.min(0, dx),
-          top: startPointEllipse.y + Math.min(0, dy),
-        });
-        canvas.renderAll();
-      }
-    });
-    this.canvasDom.addEventListener('keydown', function (e) {
-      if(createType !== CREATE_TYPE.Ellipse) {
-        return;
-      }
-      console.log(e);
-    })
-  }
+  //       ellipse.set({
+  //         rx: rx,
+  //         ry: ry,
+  //         left: startPointEllipse.x + Math.min(0, dx),
+  //         top: startPointEllipse.y + Math.min(0, dy),
+  //       });
+  //       canvas.renderAll();
+  //     }
+  //   });
+  //   // this.canvasDom.addEventListener('keydown', function (e) {
+  //   //   if(createType !== CREATE_TYPE.Ellipse) {
+  //   //     return;
+  //   //   }
+  //   //   console.log(e);
+  //   // })
+  // }
 
 
-  drawPoly() {
-    let isDrawingPolygon = false;
-    let polygonPoints = [];
-    let polygon;
+  // drawPoly() {
+  //   let isDrawingPolygon = false;
+  //   let polygonPoints = [];
+  //   let polygon;
 
-    const { canvas, createType } = this;
-    canvas.on('mouse:down', function (options) {
+  //   const { canvas, createType } = this;
+  //   canvas.on('mouse:down', function (options) {
       
-    });
+  //   });
 
-    canvas.on('mouse:move', function (options) {
-      if( createType !== CREATE_TYPE.POLYGON) {
-        return;
-      }
-      if (isDrawingPolygon) {
-        const point = options.scenePoint;
+  //   canvas.on('mouse:move', function (options) {
+  //     if( createType !== CREATE_TYPE.POLYGON) {
+  //       return;
+  //     }
+  //     if (isDrawingPolygon) {
+  //       const point = options.scenePoint;
         
-        polygonPoints[polygonPoints.length - 1] = { x: point.x, y: point.y };
-        polygon.setCoords();
-        canvas.renderAll();
-      }
-    });
+  //       polygonPoints[polygonPoints.length - 1] = { x: point.x, y: point.y };
+  //       polygon.setCoords();
+  //       canvas.renderAll();
+  //     }
+  //   });
 
-    canvas.on('mouse:dblclick', function () {
+  //   canvas.on('mouse:dblclick', function () {
       
-      console.log('dbclick', isDrawingPolygon);
-      if (isDrawingPolygon) {
-        // 确保至少有三个点才能形成多边形
-        if (polygonPoints.length >= 3) {
-          // 把起点添加到点列表末尾，封闭图形
-          polygonPoints.push(polygonPoints[0]);
-          // 移除当前的 Polyline
-          canvas.remove(polygon);
-          // 创建一个新的 Polygon 对象
-          const polygonObject = new LabeledPolygon(polygonPoints, {
-            fill: 'yellow',
-            stroke: 'lightgreen',
-            strokeWidth: 1,
-            objectCaching: false,
-            label: 'abc',
-            background: 'red',
-            zIndex: 1,
-          });
-          polygonObject.controls = controlsUtils.createPolyControls(polygon);
-          // 将新的 Polygon 添加到画布
-          canvas.add(polygonObject);
-          // 设置新的 Polygon 为活动对象
-          canvas.setActiveObject(polygonObject);
-        }
-        isDrawingPolygon = false;
-      }
-    });
+  //     console.log('dbclick', isDrawingPolygon);
+  //     if (isDrawingPolygon) {
+  //       // 确保至少有三个点才能形成多边形
+  //       if (polygonPoints.length >= 3) {
+  //         // 把起点添加到点列表末尾，封闭图形
+  //         polygonPoints.push(polygonPoints[0]);
+  //         // 移除当前的 Polyline
+  //         canvas.remove(polygon);
+  //         // 创建一个新的 Polygon 对象
+  //         const polygonObject = new LabeledPolygon(polygonPoints, {
+  //           fill: 'yellow',
+  //           stroke: 'lightgreen',
+  //           strokeWidth: 1,
+  //           objectCaching: false,
+  //           label: 'abc',
+  //           background: 'red',
+  //           zIndex: 1,
+  //         });
+  //         polygonObject.controls = controlsUtils.createPolyControls(polygon);
+  //         // 将新的 Polygon 添加到画布
+  //         canvas.add(polygonObject);
+  //         // 设置新的 Polygon 为活动对象
+  //         canvas.setActiveObject(polygonObject);
+  //       }
+  //       isDrawingPolygon = false;
+  //     }
+  //   });
 
-    function closePolygon() {
-      if (polygonPoints.length >= 3) {
-        polygon.setCoords();
+  //   function closePolygon() {
+  //     if (polygonPoints.length >= 3) {
+  //       polygon.setCoords();
 
-        canvas.setActiveObject(polygon);
-        isDrawingPolygon = false;
-      }
-    }
+  //       canvas.setActiveObject(polygon);
+  //       isDrawingPolygon = false;
+  //     }
+  //   }
 
-    // 检查顶点是否重合
-    canvas.on('mouse:down', function (options) {
-      if( createType !== CREATE_TYPE.POLYGON) {
-        return;
-      }
-      if (isDrawingPolygon && polygonPoints.length >= 3) {
-        const currentPoint = options.scenePoint;
-        const firstPoint = polygonPoints[0];
-        const distance = Math.sqrt(
-          Math.pow(currentPoint.x - firstPoint.x, 2) + Math.pow(currentPoint.y - firstPoint.y, 2)
-        );
-        if (distance < 5) { // 可调整重合判定的距离阈值
-          closePolygon();
-        }
-      }
-    });
+  //   // 检查顶点是否重合
+  //   canvas.on('mouse:down', function (options) {
+  //     if( createType !== CREATE_TYPE.POLYGON) {
+  //       return;
+  //     }
+  //     if (isDrawingPolygon && polygonPoints.length >= 3) {
+  //       const currentPoint = options.scenePoint;
+  //       const firstPoint = polygonPoints[0];
+  //       const distance = Math.sqrt(
+  //         Math.pow(currentPoint.x - firstPoint.x, 2) + Math.pow(currentPoint.y - firstPoint.y, 2)
+  //       );
+  //       if (distance < 5) { // 可调整重合判定的距离阈值
+  //         closePolygon();
+  //       }
+  //     }
+  //   });
 
-    document.addEventListener('keydown', function (e) {
-      console.log(e);
-    })
+  //   document.addEventListener('keydown', function (e) {
+  //     console.log(e);
+  //   })
 
-  }
+  // }
 
 
   zoom() {
@@ -577,7 +660,11 @@ export default class Editor {
   }
 
   startDrawingRect(options) {
-    console.log('options', options);
+   
+    if(this.createType !== CREATE_TYPE.RECT) {
+      return;
+    }
+    console.log('startDrawingRect');
     this.isDrawing = true;
       this.startPoint = options.scenePoint;
       this.currentShape = new LabeledRect({
@@ -596,6 +683,10 @@ export default class Editor {
   }
 
   drawingRect(options) {
+    if(this.createType !== CREATE_TYPE.RECT) {
+      return;
+    }
+    console.log('drawingRect');
     const { isDrawing, startPoint, currentShape, canvas } = this;
     if (isDrawing) {
       const pointer = options.scenePoint;
@@ -612,6 +703,10 @@ export default class Editor {
   }
 
   endDrawingRect() {
+    if(this.createType !== CREATE_TYPE.RECT) {
+      return;
+    }
+    console.log('endDrawingRect');
     this.isDrawing = false;
     if(this.currentShape.width === 0 || this.currentShape.height === 0) {
       this.canvas.remove(this.currentShape);
@@ -681,7 +776,6 @@ export default class Editor {
 
   resize() {
     const { canvas, img } = this;
-    debugger;
     canvas.setDimensions({
       width: this.canvasDom.clientWidth,
       height: this.canvasDom.clientHeight,
@@ -802,6 +896,7 @@ export default class Editor {
         top: img.top,
         width: 250,
         'label': 'rect', 
+        id: 1,
         // scaleX: scale,
         // scaleY: scale,
 
@@ -810,6 +905,36 @@ export default class Editor {
         stroke: 'rgba(211, 61, 61, 1)',
         // selectable: false,
       }))
+
+
+      canvas.add(new LabeledRect({
+        left: img.left + 300,
+        top: img.top + 300,
+        width: 150,
+        'label': 'rect', 
+        // scaleX: scale,
+        // scaleY: scale,
+        id: 2,
+        height: 150,
+        fill: 'red',
+        stroke: 'rgba(211, 61, 61, 1)',
+        // selectable: false,
+      }))
+
+      canvas.add(new LabeledRect({
+        left: img.left + 500,
+        top: img.top + 500,
+        width: 50,
+        'label': 'rect', 
+        id: 3,
+        // scaleX: scale,
+        // scaleY: scale,
+        height: 50,
+        fill: 'red',
+        stroke: 'rgba(211, 61, 61, 1)',
+        // selectable: false,
+      }))
+
 
       // canvas.add(new LabeledRect({
       //   left: img.left,
@@ -864,7 +989,6 @@ export default class Editor {
       //   // selectable: false,
       // }))
 
-      window.canvas = canvas;
     });
   }
 
