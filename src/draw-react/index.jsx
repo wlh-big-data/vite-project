@@ -1,18 +1,19 @@
 import React, { useEffect, useRef, useState } from 'react';
-import Editor from '../draw/index';
-import styles from './index.module.less';
+import Editor, { EditorType } from '../draw/index';
+import './index.css';
 
 export default function Draw(props) {
   const canvasRef = useRef(null);
   const canvasDomRef = useRef(null);
   const [edit, setEdit] = useState(false);
+  const editorRef = useRef();
   const typeRef = useRef('');
   useEffect(() => {
     const editor = new Editor({
       container: canvasDomRef.current,
       imgUrl: '/grid.png',
     })
-    window.editor = editor;
+    editorRef.current = editor;
     return () => {
       editor.destroy();
     }
@@ -23,15 +24,19 @@ export default function Draw(props) {
       <div className={"opers"}>
         <button onClick={() => {
           setEdit(!edit);
+          editorRef.current.setReadonly(edit);
         }}>{edit ? '编辑' : '查看'}</button>
         <button>保存</button>
         <button onClick={() => {
-          typeRef.current = 'rect';
+          console.log('juxing');
+          editorRef.current.setCreateType(EditorType.RECT);
         }}>矩形</button>
         <button onClick={() => {
-          typeRef.current = 'ellipse';
+          editorRef.current.setCreateType(EditorType.ELLIPSE);
         }}>椭圆</button>
-        <button>多边形</button>
+        <button onClick={() => {
+          editorRef.current.setCreateType(EditorType.POLYGON);
+        }}>多边形</button>
         <button onClick={() => {
           window.editor.canvas.getObjects().forEach((item) => {
             console.log(item);

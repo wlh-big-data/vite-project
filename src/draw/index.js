@@ -24,14 +24,29 @@ Rect.prototype.setControlVisible('mr', true);
 Rect.prototype.setControlVisible('mb', true);
 Rect.prototype.setControlVisible('mtr', false);
 
+const CREATE_TYPE = {
+  POLYGON: 1,
+  CIRCLE: 2,
+  ELLIPSE: 3,
+  RECT: 4,
+  NONE: 0,
+}
 
+export const EditorType = CREATE_TYPE;
 
 export default class Editor {
+  // this.canvasDom = null;
+  // this.imgUrl = '';
+  // this.readonly = true; 查看、编辑
+  // createType = CREATE_TYPE.NONE;
+  // 
+
   constructor({
     container,
     imgUrl,
   }) {
     this.canvasDom = container;
+    this.readonly = true;
 
     if (!container) {
       throw new Error('container is required');
@@ -42,7 +57,12 @@ export default class Editor {
     this.drawRect = this.drawRect.bind(this);
     this.drawPoly = this.drawPoly.bind(this);
     this.keydown = this.keydown.bind(this);
-    window.addEventListener('resize', this.resize);
+    this.setCreateType = this.setCreateType.bind(this);
+    this.setReadonly = this.setReadonly.bind(this);
+    this.drawEllipse = this.drawEllipse.bind(this);
+    
+    this.getImageBounds = this.getImageBounds.bind(this);
+    this.addMovementConstraints = this.addMovementConstraints.bind(this);
 
     this.canvas = new Canvas(container.querySelector('canvas'));
     console.log('container', container.clientHeight, container.clientWidth);
@@ -53,32 +73,159 @@ export default class Editor {
     });
 
     this.zoom();
-    // this.drawPoly();
-    // this.drawRect();
     this.keydown();
 
     if (imgUrl) {
       this.setImage(imgUrl);
     }
 
+    // window.addEventListener('resize', this.resize);
+    this.addMovementConstraints();
+    this.startDrawingEllipse = this.startDrawingEllipse.bind(this);
+    this.endDrawingEllipse = this.endDrawingEllipse.bind(this);
+    this.drawingEllipse = this.drawingEllipse.bind(this);
+
+    this.startDrawingRect = this.startDrawingRect.bind(this);
+    this.endDrawingRect = this.endDrawingRect.bind(this);
+    this.drawingRect = this.drawingRect.bind(this);
+
+    this.startDrawingPoly = this.startDrawingPoly.bind(this);
+    this.endDrawingPoly = this.endDrawingPoly.bind(this);
+    this.drawingPoly = this.drawingPoly.bind(this);
+    
+  }
+
+  addMovementConstraints() {
     const { canvas } = this;
-    canvas.on('object:resize', function() {
-      console.log('object:resize');
+    
+    // 移动不允许超过边界
+    canvas.on('object:moving', (options) => {
+      
+      const obj = options.target;
+      const imgBounds = this.getImageBounds();
+      // console.log('mouse mov', imgBounds);
+      
+      if (!imgBounds) return;
+  
+      // 考虑对象尺寸
+      const objLeft = obj.left;
+      const objTop = obj.top;
+      const objRight = objLeft + obj.width * obj.scaleX;
+      const objBottom = objTop + obj.height * obj.scaleY;
+  
+      // 计算修正后的位置
+      let newLeft = objLeft;
+      let newTop = objTop;
+  
+      // 水平边界
+      if (objLeft < imgBounds.left) {
+        newLeft = imgBounds.left;
+      } else if (objRight > imgBounds.right) {
+        newLeft = imgBounds.right - obj.width * obj.scaleX;
+      }
+  
+      // 垂直边界
+      if (objTop < imgBounds.top) {
+        newTop = imgBounds.top;
+      } else if (objBottom > imgBounds.bottom) {
+        newTop = imgBounds.bottom - obj.height * obj.scaleY;
+      }
+  
+      // 应用修正
+      if (newLeft !== objLeft || newTop !== objTop) {
+        obj.set({
+          left: newLeft,
+          top: newTop
+        }).setCoords();
+        canvas.requestRenderAll();
+      }
     });
-  //   canvas.on('object:scaling', function(){
-  //     var obj = canvas.getActiveObject(),
-  //         width = obj.width,
-  //         height = obj.height,
-  //         scaleX = obj.scaleX,
-  //         scaleY = obj.scaleY;
-   
-  //     obj.set({
-  //         width : width * scaleX,
-  //         height : height * scaleY,
-  //         scaleX: 1,
-  //         scaleY: 1
-  //     });
-  // });
+
+    // 缩放不允许超过边界
+    canvas.on('object:scaling', (options) => {
+      const obj = options.target;
+      const imgBounds = this.getImageBounds();
+      
+      if (!imgBounds) return;
+
+      const objLeft = obj.left;
+      const objTop = obj.top;
+      const objRight = objLeft + obj.width * obj.scaleX;
+      const objBottom = objTop + obj.height * obj.scaleY;
+
+      let newScaleX = obj.scaleX;
+      let newScaleY = obj.scaleY;
+
+      if (objRight > imgBounds.right) {
+        newScaleX = (imgBounds.right - objLeft) / obj.width;
+      }
+      if (objLeft < imgBounds.left) {
+        newScaleX = (imgBounds.right - imgBounds.left) / obj.width;
+        obj.set({ left: imgBounds.left });
+      }
+
+      if (objBottom > imgBounds.bottom) {
+        newScaleY = (imgBounds.bottom - objTop) / obj.height;
+      }
+      if (objTop < imgBounds.top) {
+        newScaleY = (imgBounds.bottom - imgBounds.top) / obj.height;
+        obj.set({ top: imgBounds.top });
+      }
+
+      if (newScaleX !== obj.scaleX || newScaleY !== obj.scaleY) {
+        obj.set({
+          scaleX: newScaleX,
+          scaleY: newScaleY
+        }).setCoords();
+        canvas.requestRenderAll();
+      }
+    });
+  }
+
+  getImageBounds() {
+    if (!this.img) return null;
+    return {
+      left: this.img.left,
+      top: this.img.top,
+      right: this.img.left + this.img.width * this.img.scaleX,
+      bottom: this.img.top + this.img.height * this.img.scaleY
+    };
+  }
+  setReadonly(flag) {
+    this.readonly = flag;
+    console.log('flag', flag);
+    if(flag) {
+      this.setCreateType(CREATE_TYPE.NONE); 
+    }
+  }
+
+  setCreateType(createType) {
+    console.log('createType', createType);
+    this.createType = createType;
+    this.readonly = false;
+    this.canvas.off('mouse:down', this.startDrawingRect);
+    this.canvas.off('mouse:move', this.drawingRect);
+    this.canvas.off('mouse:up', this.endDrawingRect);
+    this.canvas.off('mouse:down', this.startDrawingEllipse);
+    this.canvas.off('mouse:move', this.drawingEllipse);
+    this.canvas.off('mouse:up', this.endDrawingEllipse);
+    this.canvas.off('mouse:down', this.startDrawingPoly);
+    this.canvas.off('mouse:move', this.drawingPoly);
+    this.canvas.off('mouse:up', this.endDrawingPoly);
+    if (createType === CREATE_TYPE.RECT) {
+      this.canvas.on('mouse:down', this.startDrawingRect);
+      this.canvas.on('mouse:move', this.drawingRect);
+      this.canvas.on('mouse:up', this.endDrawingRect);
+    } else if( createType === CREATE_TYPE.ELLIPSE) {
+      this.canvas.on('mouse:down', this.startDrawingEllipse);
+      this.canvas.on('mouse:move', this.drawingEllipse);
+      this.canvas.on('mouse:up', this.endDrawingEllipse);
+    } else if (createType === CREATE_TYPE.POLYGON) {
+      console.log('create type', createType);
+      this.canvas.on('mouse:down', this.startDrawingPoly);
+      this.canvas.on('mouse:move', this.drawingPoly);
+      this.canvas.on('mouse:dblclick', this.endDrawingPoly);
+    }
   }
 
   keydown() {
@@ -90,12 +237,158 @@ export default class Editor {
     });
   }
 
+  startDrawingEllipse(options) {
+    console.log('startDrawingEllipse', options);
+    
+    const imgBounds = this.getImageBounds();
+    if (!imgBounds) return;
+    const { pointer } = options;
+    if (pointer.x < imgBounds.left || pointer.x > imgBounds.right || pointer.y < imgBounds.top || pointer.y > imgBounds.bottom) {
+      return;
+    }
+
+    this.isDrawing = true;
+    this.startPoint = options.pointer;
+    this.currentShape = new Ellipse({
+      left: this.startPoint.x,
+      top: this.startPoint.y,
+      rx: 0,
+      ry: 0,
+      fill: 'yellow',
+      objectCaching: false,
+      stroke: 'lightgreen',
+      strokeWidth: 4,
+    });
+    this.canvas.add(this.currentShape);
+  }
+
+  drawingEllipse(options) {
+    const { isDrawing, startPoint, currentShape, canvas } = this;
+    if (isDrawing) {
+      console.log('drawingEllipse', options);
+      const pointer = options.pointer;
+      const dx = pointer.x - startPoint.x;
+      const dy = pointer.y - startPoint.y;
+      let rx = Math.abs(dx) / 2;
+      let ry = Math.abs(dy) / 2;
+      const imageBounds = this.getImageBounds();
+
+      // 计算椭圆的边界
+      const ellipseLeft = startPoint.x + Math.min(0, dx);
+      const ellipseTop = startPoint.y + Math.min(0, dy);
+      const ellipseRight = ellipseLeft + rx * 2;
+      const ellipseBottom = ellipseTop + ry * 2;
+
+      // 水平边界检查
+      if (ellipseLeft < imageBounds.left) {
+        rx = Math.max(0, rx + (imageBounds.left - ellipseLeft) / 2);
+        startPoint.x = imageBounds.left;
+      } else if (ellipseRight > imageBounds.right) {
+        rx = Math.max(0, (imageBounds.right - ellipseLeft) / 2);
+      }
+
+      // 垂直边界检查
+      if (ellipseTop < imageBounds.top) {
+        ry = Math.max(0, ry + (imageBounds.top - ellipseTop) / 2);
+        startPoint.y = imageBounds.top;
+      } else if (ellipseBottom > imageBounds.bottom) {
+        ry = Math.max(0, (imageBounds.bottom - ellipseTop) / 2);
+      }
+
+      // 设置椭圆的位置和半径
+      currentShape.set({
+        rx: rx,
+        ry: ry,
+        left: startPoint.x,
+        top: startPoint.y,
+      });
+      canvas.renderAll();
+    }
+  }
+
+  endDrawingEllipse(options) {
+    console.log('endDrawingEllipse', options);
+    this.isDrawing = false;
+  }
+
+  startDrawingPoly(options) {
+    const { canvas } = this;
+    console.log('click', options.pointer);
+    const imgBounds = this.getImageBounds();
+    if (!imgBounds) return;
+    const { pointer } = options;
+    if (pointer.x < imgBounds.left || pointer.x > imgBounds.right || pointer.y < imgBounds.top || pointer.y > imgBounds.bottom) {
+      return;
+    }
+    if (!this.isDrawing) {
+      this.isDrawing = true;
+      this.polygonPoints = [];
+      this.polygonPoints.push({ x: options.scenePoint.x, y: options.scenePoint.y });
+    }
+    const point = options.scenePoint;
+    this.polygonPoints.push({ x: point.x, y: point.y });
+
+    if (this.polygon) {
+      canvas.remove(this.polygon);
+    }
+
+    this.polygon = new Polyline(this.polygonPoints, {
+      fill: 'yellow',
+      stroke: 'lightgreen',
+      strokeWidth: 1,
+      objectCaching: false,
+      
+    });
+    
+    canvas.add(this.polygon);
+  }
+
+  drawingPoly(options) {
+    const { isDrawing, polygonPoints, polygon, canvas } = this;
+    if (isDrawing) {
+      const point = options.scenePoint;
+      
+      polygonPoints[polygonPoints.length - 1] = { x: point.x, y: point.y };
+      polygon.setCoords();
+      canvas.renderAll();
+    }
+  }
+
+  endDrawingPoly(options) {
+    const { isDrawing, polygonPoints, polygon, canvas } = this;
+    if (isDrawing) {
+      // 确保至少有三个点才能形成多边形
+      if (polygonPoints.length >= 3) {
+        // 把起点添加到点列表末尾，封闭图形
+        polygonPoints.push(polygonPoints[0]);
+        // 移除当前的 Polyline
+        canvas.remove(polygon);
+        // 创建一个新的 Polygon 对象
+        const polygonObject = new LabeledPolygon(polygonPoints, {
+          fill: 'yellow',
+          stroke: 'lightgreen',
+          strokeWidth: 1,
+          objectCaching: false,
+          label: 'abc',
+          background: 'red',
+          zIndex: 1,
+        });
+        // polygonObject.controls = controlsUtils.createPolyControls(polygon);
+        // 将新的 Polygon 添加到画布
+        canvas.add(polygonObject);
+        // 设置新的 Polygon 为活动对象
+        canvas.setActiveObject(polygonObject);
+      }
+      this.isDrawing = false;
+    }
+  }
+
   drawEllipse() {
 
     let isDrawingEllipse = false;
     let startPointEllipse;
     let ellipse;
-    const { canvas } = this;
+    const { canvas, createType } = this;
 
     canvas.on('mouse:down', function (options) {
 
@@ -115,7 +408,9 @@ export default class Editor {
     });
 
     canvas.on('mouse:move', function (options) {
-
+      if(createType !== CREATE_TYPE.Ellipse) {
+        return;
+      }
       if (isDrawingEllipse) {
         const pointer = options.pointer;
         const dx = pointer.x - startPointEllipse.x;
@@ -140,45 +435,28 @@ export default class Editor {
       }
     });
     this.canvasDom.addEventListener('keydown', function (e) {
+      if(createType !== CREATE_TYPE.Ellipse) {
+        return;
+      }
       console.log(e);
     })
   }
+
 
   drawPoly() {
     let isDrawingPolygon = false;
     let polygonPoints = [];
     let polygon;
 
-    const { canvas } = this;
-    console.log('canvas', canvas);
-    canvas.on('keydown', (e) => {
-      console.log('e', e);
-    })
+    const { canvas, createType } = this;
     canvas.on('mouse:down', function (options) {
-      if (!isDrawingPolygon) {
-        isDrawingPolygon = true;
-        polygonPoints = [];
-        polygonPoints.push({ x: options.scenePoint.x, y: options.scenePoint.y });
-      }
-      const point = options.scenePoint;
-      polygonPoints.push({ x: point.x, y: point.y });
-
-      if (polygon) {
-        canvas.remove(polygon);
-      }
-
-      polygon = new Polyline(polygonPoints, {
-        fill: 'yellow',
-        stroke: 'lightgreen',
-        strokeWidth: 1,
-        objectCaching: false,
-        
-      });
       
-      canvas.add(polygon);
     });
 
     canvas.on('mouse:move', function (options) {
+      if( createType !== CREATE_TYPE.POLYGON) {
+        return;
+      }
       if (isDrawingPolygon) {
         const point = options.scenePoint;
         
@@ -188,14 +466,8 @@ export default class Editor {
       }
     });
 
-    // canvas.on('mouse:dblclick', function () {
-    //   console.log('dbclick', isDrawingPolygon);
-    //   if (isDrawingPolygon) {
-    //     closePolygon();
-    //   }
-    // });
-
     canvas.on('mouse:dblclick', function () {
+      
       console.log('dbclick', isDrawingPolygon);
       if (isDrawingPolygon) {
         // 确保至少有三个点才能形成多边形
@@ -224,8 +496,6 @@ export default class Editor {
       }
     });
 
-
-
     function closePolygon() {
       if (polygonPoints.length >= 3) {
         polygon.setCoords();
@@ -237,6 +507,9 @@ export default class Editor {
 
     // 检查顶点是否重合
     canvas.on('mouse:down', function (options) {
+      if( createType !== CREATE_TYPE.POLYGON) {
+        return;
+      }
       if (isDrawingPolygon && polygonPoints.length >= 3) {
         const currentPoint = options.scenePoint;
         const firstPoint = polygonPoints[0];
@@ -287,14 +560,57 @@ export default class Editor {
     canvas.on('mouse:wheel', handleMouseWheel);
   }
 
+  startDrawingRect(options) {
+    this.isDrawing = true;
+      this.startPoint = options.pointer;
+      this.currentShape = new LabeledRect({
+        left: this.startPoint.x,
+        top: this.startPoint.y,
+        width: 0,
+        height: 0,
+        fill: 'yellow',
+        fill: 'rgba(255,255,255,1)',
+        objectCaching: false,
+        stroke: 'lightgreen',
+        strokeWidth: 1,
+        label: 'ab'
+      });
+      this.canvas.add(this.currentShape);
+  }
+
+  drawingRect(options) {
+    const { isDrawing, startPoint, currentShape, canvas } = this;
+    if (isDrawing) {
+      const pointer = options.pointer;
+      currentShape.set({
+        width: Math.abs(pointer.x - startPoint.x),
+        height: Math.abs(pointer.y - startPoint.y),
+        left: Math.min(startPoint.x, pointer.x),
+        top: Math.min(startPoint.y, pointer.y),
+        // scaleX: scale,
+        // scaleY: scale,
+      });
+      canvas.renderAll();
+    }
+  }
+
+  endDrawingRect() {
+    this.isDrawing = false;
+    this.canvas.setActiveObject(this.currentShape);
+  }
+
   drawRect() {
     let isDrawing = false;
     let startPoint;
     let rect;
-    const { canvas, scale } = this;
+    const { canvas, scale, createType } = this;
     console.log('scale', this.scale, this);
 
     canvas.on('mouse:down', function (options) {
+      // console.log('react mouse down', createType, options);
+      if( createType !== CREATE_TYPE.RECT) {
+        return;
+      }
       console.log('isdrawing', isDrawing);
       isDrawing = true;
       startPoint = options.pointer;
@@ -314,6 +630,9 @@ export default class Editor {
     });
 
     canvas.on('mouse:move', function (options) {
+      if( createType !== CREATE_TYPE.RECT) {
+        return;
+      }
       console.log('isdrawing', isDrawing);
       if (isDrawing) {
         const pointer = options.pointer;
@@ -330,6 +649,9 @@ export default class Editor {
     });
 
     canvas.on('mouse:up', function () {
+      if( createType !== CREATE_TYPE.RECT) {
+        return;
+      }
       console.log('isdrawing', isDrawing);
       isDrawing = false;
       canvas.setActiveObject(rect);
@@ -338,6 +660,7 @@ export default class Editor {
 
   resize() {
     const { canvas, img } = this;
+    debugger;
     canvas.setDimensions({
       width: this.canvasDom.clientWidth,
       height: this.canvasDom.clientHeight,
