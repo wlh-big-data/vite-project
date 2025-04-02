@@ -1,4 +1,4 @@
-import { Canvas, FabricImage, Rect, Ellipse, FabricObject, Polyline, Polygon, FabricText, controlsUtils, Group } from "fabric";
+import { Canvas, FabricImage, Rect, Ellipse, FabricObject, Polyline, Polygon, FabricText, controlsUtils, Group, Path } from "fabric";
 import LabeledPolygon from './Polygon';
 import LabeledRect from './Rect';
 
@@ -54,7 +54,7 @@ export default class Editor {
 
     this.resize = this.resize.bind(this);
     this.drag = this.drag.bind(this);
-    this.drawRect = this.drawRect.bind(this);
+    // this.drawRect = this.drawRect.bind(this);
     this.drawPoly = this.drawPoly.bind(this);
     this.keydown = this.keydown.bind(this);
     this.setCreateType = this.setCreateType.bind(this);
@@ -92,6 +92,8 @@ export default class Editor {
     this.startDrawingPoly = this.startDrawingPoly.bind(this);
     this.endDrawingPoly = this.endDrawingPoly.bind(this);
     this.drawingPoly = this.drawingPoly.bind(this);
+    this.selectObjects = this.selectObjects.bind(this);
+    this.selectObjects();
     
   }
 
@@ -228,6 +230,15 @@ export default class Editor {
     }
   }
 
+  selectObjects() {
+    this.canvas.on('selection:created', (options) => {
+      this.setReadonly(true);
+    });
+    this.canvas.on('selection:created', (options) => {
+      this.setReadonly(false);
+    });
+  }
+
   keydown() {
     this.canvas.on('keydown', (e) => {
       console.log('keydown', e);
@@ -248,7 +259,7 @@ export default class Editor {
     }
 
     this.isDrawing = true;
-    this.startPoint = options.pointer;
+    this.startPoint = options.scenePoint;
     this.currentShape = new Ellipse({
       left: this.startPoint.x,
       top: this.startPoint.y,
@@ -266,7 +277,7 @@ export default class Editor {
     const { isDrawing, startPoint, currentShape, canvas } = this;
     if (isDrawing) {
       console.log('drawingEllipse', options);
-      const pointer = options.pointer;
+      const pointer = options.scenePoint;
       const dx = pointer.x - startPoint.x;
       const dy = pointer.y - startPoint.y;
       let rx = Math.abs(dx) / 2;
@@ -309,6 +320,11 @@ export default class Editor {
   endDrawingEllipse(options) {
     console.log('endDrawingEllipse', options);
     this.isDrawing = false;
+    if(this.currentShape.rx === 0 || this.currentShape.ry === 0) {
+      this.canvas.remove(this.currentShape);
+    }else {
+      this.canvas.setActiveObject(this.currentShape);
+    }
   }
 
   startDrawingPoly(options) {
@@ -316,7 +332,7 @@ export default class Editor {
     console.log('click', options.pointer);
     const imgBounds = this.getImageBounds();
     if (!imgBounds) return;
-    const { pointer } = options;
+    const pointer = options.scenePoint;
     if (pointer.x < imgBounds.left || pointer.x > imgBounds.right || pointer.y < imgBounds.top || pointer.y > imgBounds.bottom) {
       return;
     }
@@ -535,7 +551,7 @@ export default class Editor {
     // 监听鼠标滚轮事件
     const handleMouseWheel = (options) => {
       const { e } = options;
-      console.log('e', e);
+      // console.log('e', e);
       const delta = Math.sign(e.deltaY);
       const currentZoom = canvas.getZoom();
       console.log('currentZoom', currentZoom);
@@ -561,8 +577,9 @@ export default class Editor {
   }
 
   startDrawingRect(options) {
+    console.log('options', options);
     this.isDrawing = true;
-      this.startPoint = options.pointer;
+      this.startPoint = options.scenePoint;
       this.currentShape = new LabeledRect({
         left: this.startPoint.x,
         top: this.startPoint.y,
@@ -581,7 +598,7 @@ export default class Editor {
   drawingRect(options) {
     const { isDrawing, startPoint, currentShape, canvas } = this;
     if (isDrawing) {
-      const pointer = options.pointer;
+      const pointer = options.scenePoint;
       currentShape.set({
         width: Math.abs(pointer.x - startPoint.x),
         height: Math.abs(pointer.y - startPoint.y),
@@ -596,67 +613,71 @@ export default class Editor {
 
   endDrawingRect() {
     this.isDrawing = false;
-    this.canvas.setActiveObject(this.currentShape);
+    if(this.currentShape.width === 0 || this.currentShape.height === 0) {
+      this.canvas.remove(this.currentShape);
+    }else {
+      this.canvas.setActiveObject(this.currentShape);
+    }
   }
 
-  drawRect() {
-    let isDrawing = false;
-    let startPoint;
-    let rect;
-    const { canvas, scale, createType } = this;
-    console.log('scale', this.scale, this);
+  // drawRect() {
+  //   let isDrawing = false;
+  //   let startPoint;
+  //   let rect;
+  //   const { canvas, scale, createType } = this;
+  //   console.log('scale', this.scale, this);
 
-    canvas.on('mouse:down', function (options) {
-      // console.log('react mouse down', createType, options);
-      if( createType !== CREATE_TYPE.RECT) {
-        return;
-      }
-      console.log('isdrawing', isDrawing);
-      isDrawing = true;
-      startPoint = options.pointer;
-      rect = new LabeledRect({
-        left: startPoint.x,
-        top: startPoint.y,
-        width: 0,
-        height: 0,
-        fill: 'yellow',
-        fill: 'rgba(255,255,255,1)',
-        objectCaching: false,
-        stroke: 'lightgreen',
-        strokeWidth: 1,
-        label: 'ab'
-      });
-      canvas.add(rect);
-    });
+  //   canvas.on('mouse:down', function (options) {
+  //     // console.log('react mouse down', createType, options);
+  //     if( createType !== CREATE_TYPE.RECT) {
+  //       return;
+  //     }
+  //     console.log('isdrawing', isDrawing);
+  //     isDrawing = true;
+  //     startPoint = options.pointer;
+  //     rect = new LabeledRect({
+  //       left: startPoint.x,
+  //       top: startPoint.y,
+  //       width: 0,
+  //       height: 0,
+  //       fill: 'yellow',
+  //       fill: 'rgba(255,255,255,1)',
+  //       objectCaching: false,
+  //       stroke: 'lightgreen',
+  //       strokeWidth: 1,
+  //       label: 'ab'
+  //     });
+  //     canvas.add(rect);
+  //   });
 
-    canvas.on('mouse:move', function (options) {
-      if( createType !== CREATE_TYPE.RECT) {
-        return;
-      }
-      console.log('isdrawing', isDrawing);
-      if (isDrawing) {
-        const pointer = options.pointer;
-        rect.set({
-          width: Math.abs(pointer.x - startPoint.x),
-          height: Math.abs(pointer.y - startPoint.y),
-          left: Math.min(startPoint.x, pointer.x),
-          top: Math.min(startPoint.y, pointer.y),
-          // scaleX: scale,
-          // scaleY: scale,
-        });
-        canvas.renderAll();
-      }
-    });
+  //   canvas.on('mouse:move', function (options) {
+  //     if( createType !== CREATE_TYPE.RECT) {
+  //       return;
+  //     }
+  //     console.log('isdrawing', isDrawing);
+  //     if (isDrawing) {
+  //       const pointer = options.pointer;
+  //       rect.set({
+  //         width: Math.abs(pointer.x - startPoint.x),
+  //         height: Math.abs(pointer.y - startPoint.y),
+  //         left: Math.min(startPoint.x, pointer.x),
+  //         top: Math.min(startPoint.y, pointer.y),
+  //         // scaleX: scale,
+  //         // scaleY: scale,
+  //       });
+  //       canvas.renderAll();
+  //     }
+  //   });
 
-    canvas.on('mouse:up', function () {
-      if( createType !== CREATE_TYPE.RECT) {
-        return;
-      }
-      console.log('isdrawing', isDrawing);
-      isDrawing = false;
-      canvas.setActiveObject(rect);
-    });
-  }
+  //   canvas.on('mouse:up', function () {
+  //     if( createType !== CREATE_TYPE.RECT) {
+  //       return;
+  //     }
+  //     console.log('isdrawing', isDrawing);
+  //     isDrawing = false;
+  //     canvas.setActiveObject(rect);
+  //   });
+  // }
 
   resize() {
     const { canvas, img } = this;
@@ -742,6 +763,9 @@ export default class Editor {
       console.log('this.img size', img.width, img.height);
 
       canvas.insertAt(0, img);
+
+      // const path = new Path('M200,200h-100c55.22847,0 100,-44.77153 100,-100z');
+      // canvas.add(path);
 
       // const rect = new LabeledRect({
       //   left: img.left,

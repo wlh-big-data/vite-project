@@ -18,6 +18,8 @@ export default function Draw(props) {
       editor.destroy();
     }
 
+    // 'M200,200h-100c55.22847,0 100,-44.77153 100,-100z'
+
   }, []);
   return (
     <div className={"container"}>
@@ -38,7 +40,7 @@ export default function Draw(props) {
           editorRef.current.setCreateType(EditorType.POLYGON);
         }}>多边形</button>
         <button onClick={() => {
-          window.editor.canvas.getObjects().forEach((item) => {
+          editorRef.current.canvas.getObjects().forEach((item) => {
             console.log(item);
           })
         }}>获取所有物体</button>
