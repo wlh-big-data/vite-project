@@ -1,5 +1,5 @@
 import { Rect, FabricText } from 'fabric';
-import { Path, Point, Size } from 'paper';
+import { Path, Point, Size, Matrix } from 'paper';
 
 export default class LabeledRect extends Rect {
   constructor(options = {}) {
@@ -24,21 +24,49 @@ export default class LabeledRect extends Rect {
     super._render(ctx);
     // ctx.save();
     ctx.fillStyle = 'rgb(0,0,0)';
-    ctx.font="16px Arial";
+    ctx.font = "16px Arial";
 
     // this.labelText._render.bind(this.labelText)(ctx);
-    ctx.fillText(this.label, -this.width / 2, -this.height/2 + 16);
+    ctx.fillText(this.label, -this.width / 2, -this.height / 2 + 16);
 
     // ctx.restore();
     // this.labelText._render.bind(this.labelText)(ctx);
     // Update label text content and position
-    
+
   }
 
   toPaperObject() {
-    console.log(this);
-    var square = new Path.Rectangle(new Point(this.left, this.top),  new Size(this.width, this.height));
-    return square;
+    // const matrix = this.calcTransformMatrix();
+    // console.log('matrix', matrix);
+    // if (this.group) {
+    //   const square = new Path.Rectangle(this.group.left + this.group.width * this.group.scaleX / 2 + this.left,
+    //     this.group.top + this.group.height * this.group.scaleY / 2 + this.top, this.width * this.scaleX, this.height * this.scaleY);
+    //   return square;
+    // } else {
+    //   var square = new Path.Rectangle(this.left, this.top, this.width * this.scaleX, this.height * this.scaleY);
+    //   return square;
+    // }
+    const paper = new Path.Rectangle(0, 0, this.width, this.height);
+    const matrix = this.calcTransformMatrix();
+    // const center = this.getCenterPoint();
+    // const ownMathrix = this.calcOwnMatrix();
+    
+    console.log('paper object matrix', matrix);
+    // 转换为 Paper.js 矩阵格式 [a, b, c, d, tx, ty]
+    const paperMatrix = new Matrix(
+      matrix[0], matrix[1],
+      matrix[2], matrix[3],
+
+      matrix[4] - this.width/2 * matrix[0],  // X 轴中心补偿
+      matrix[5] - this.height/2 * matrix[3] 
+    );
+    paper.transform(paperMatrix);
+    return paper;
+
+  }
+
+  scale() {
+
   }
 
   // set(key, value) {

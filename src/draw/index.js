@@ -1,7 +1,8 @@
-import { Canvas, FabricImage, Rect, Ellipse, FabricObject, Polyline, Polygon, FabricText, controlsUtils, Group, Path } from "fabric";
+import { Canvas, FabricImage, Rect, Ellipse, FabricObject, Polyline, Polygon, FabricText, controlsUtils, Group } from "fabric";
 import paper from 'paper';
 import LabeledPolygon from './Polygon';
 import LabeledRect from './Rect';
+import Path from './Path';
 
 FabricObject.prototype.setControlVisible('mtr', false);
 // 'tl', 'tr', 'br', 'bl', 'ml', 'mt', 'mr', 'mb', 'mtr'.
@@ -69,6 +70,8 @@ export default class Editor {
     this.canvas = new Canvas(canvasDom);
 
     const noshowCanvas = document.getElementById('noshowCanvas');
+    noshowCanvas.width = container.clientWidth ;
+    noshowCanvas.height = container.clientHeight;
 
 
     paper.setup(noshowCanvas);
@@ -86,7 +89,7 @@ export default class Editor {
     }
 
     // window.addEventListener('resize', this.resize);
-    this.addMovementConstraints();
+    // this.addMovementConstraints();
     this.startDrawingEllipse = this.startDrawingEllipse.bind(this);
     this.endDrawingEllipse = this.endDrawingEllipse.bind(this);
     this.drawingEllipse = this.drawingEllipse.bind(this);
@@ -150,16 +153,17 @@ export default class Editor {
     this.canvas.remove(right);
     
     const path = new Path(pathData, {
-      left: {
-        x: Math.min(left.left, right.left),
-        y: Math.min(left.top, right.top),
-      },
-      right: {
-        x: Math.max(left.right, right.right),
-        y: Math.max(left.bottom, right.bottom),
-      }
+      // left: {
+      //   x: Math.min(left.left, right.left),
+      //   y: Math.min(left.top, right.top),
+      // },
+      // right: {
+      //   x: Math.max(left.right, right.right),
+      //   y: Math.max(left.bottom, right.bottom),
+      // }
     });
     this.canvas.add(path);
+    this.canvas.requestRenderAll();
   }
 
   destroy() {
@@ -292,10 +296,21 @@ export default class Editor {
 
   keydown(e) {
     // console.log('e', e);
-
+    console.log('keydown', e.key);
     if (e.key === 'Escape') {
       this.cancelDrawingPoly();
       // this.canvas.setActiveObject(null);
+    } else if(e.key === 'Delete' || e.key === 'Dead' || e.key === 'Backspace') {
+      const selectedItems = this.selected;
+      selectedItems.forEach(obj => {
+        this.canvas.remove(obj);
+    });
+      // if (activeObject) {
+      //   this.canvas.remove(activeObject);
+      this.canvas.discardActiveObject();
+      this.canvas.requestRenderAll();
+        // this.canvas.renderAll();
+      // }
     }
   }
 
@@ -382,7 +397,7 @@ export default class Editor {
         left: startPoint.x,
         top: startPoint.y,
       });
-      canvas.renderAll();
+      canvas.requestRenderAll();
     }
   }
 
@@ -831,6 +846,43 @@ export default class Editor {
     this.canvas.dispose();
   }
 
+  unite(left, right) {
+    // const group = new Group([left, right]);
+    const leftPath = left.toPaperObject();
+    const rightPath = right.toPaperObject();
+    const path = leftPath.unite(rightPath);
+    console.log('path', path.pathData);
+    // this.canvas.remove(left);
+    // this.canvas.remove(right);
+    // this.canvas.add(path.pathData);
+    this.canvas.add( new Path(path.pathData));
+    this.canvas.renderAll();
+  }
+  intersect(left, right) {
+    const leftPath = left.toPaperObject();
+    const rightPath = right.toPaperObject();
+    const path = leftPath.intersect(rightPath);
+    console.log('path', path.pathData);
+
+    this.canvas.remove(left);
+    this.canvas.remove(right);
+    if(path.pathData ) {
+      this.canvas.add( new Path(path.pathData));
+    }
+    this.canvas.renderAll();
+  }
+  subtract(left, right) {
+    const leftPath = left.toPaperObject();
+    const rightPath = right.toPaperObject();
+    const path = leftPath.subtract(rightPath);
+    console.log('path', path.pathData);
+    this.canvas.remove(left);
+    this.canvas.remove(right);
+    // this.canvas.add(path.pathData);
+    this.canvas.add( new Path(path.pathData));
+    this.canvas.renderAll();
+  }
+
   setImage(src) {
     this.imgUrl = src;
     FabricImage.fromURL(src).then((img) => {
@@ -892,8 +944,8 @@ export default class Editor {
       // // canvas.add(group);
 
       canvas.add(new LabeledRect({
-        left: img.left,
-        top: img.top,
+        left: 0,
+        top: 0,
         width: 250,
         'label': 'rect', 
         id: 1,
@@ -905,6 +957,8 @@ export default class Editor {
         stroke: 'rgba(211, 61, 61, 1)',
         // selectable: false,
       }))
+
+      canvas.add(new Path('M300,300 h100 v100 h-100 z'));
 
 
       canvas.add(new LabeledRect({
