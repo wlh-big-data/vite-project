@@ -56,9 +56,9 @@ export default function Draw(props) {
             const left = selections[0].toPaperObject();
             const right = selections[1].toPaperObject();
             const newObject = left.intersect(right);
-            console.log(newObject);
+            console.log(left, right, newObject);
             if(newObject) {
-              editorRef.current.addPath(left, right, newObject);
+              editorRef.current.addPath(left, right, newObject.pathData);
             }
           }
         }}>交集</button>

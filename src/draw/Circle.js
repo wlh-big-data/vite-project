@@ -1,0 +1,65 @@
+import { Circle } from "fabric";
+import { Path } from "paper";
+import { STYLE } from './constants';
+
+export default class LabeledCircle extends Circle {
+  constructor(options = {}) {
+    super(options);
+    this.label = options.label || "circle"; // 标签文本
+    this.fill = options.fill || STYLE.fillColor; // 填充颜色
+    this.stroke = options.stroke || STYLE.strokeColor; // 边框颜色
+  }
+
+  _render(ctx) {
+    super._render(ctx); // 调用父类的渲染方法 
+    ctx.fillStyle = "rgb(0,0,0)"; // 设置文本颜色为黑色
+    ctx.font = "16px Arial"; // 设置字体样式为 Arial，大小为 16px
+    ctx.fillText(this.label, -this.radius, -this.radius - 4); // 在圆形中心绘制标签文本
+  }
+
+  toPaperObject() {
+    const paper = new Path.Circle(0, 0, this.radius); // 创建 Paper.js 圆形对象
+    const matrix = this.calcTransformMatrix(); // 获取 Fabric 对象的变换矩
+    paper.matrix = matrix; // 将 Paper.js 圆形对象的变换矩阵
+    return paper; 
+  }
+
+  toJSON(left, top, scale) {
+    const radius = Math.round(this.radius * Math.max(this.scaleX, this.scaleY) / scale);
+    return {
+        type: this.type,
+        radius,
+        left: Math.round((this.left - left)/scale),
+        top: Math.round((this.top - top)/scale),
+        label: this.label
+    }
+  }
+
+  _containsPoint(point, center) {
+    // const flag = super.containsPoint(point);
+    // if(!flag) {
+    //   return false;
+    // }
+    
+    const dx = point.x - center.x;
+    const dy = point.y - center.y;
+    return dx * dx + dy * dy <= this.radius * this.radius;
+  }
+
+  getMask(mask) {
+    const boundingRect = this.getBoundingRect();
+    const center = this.getCenterPoint();
+    const { left, top, width, height } = boundingRect;
+    const minLeft = Math.floor(left);
+    const minTop = Math.floor(top);
+    const maxLeft = Math.round(left + width);
+    const maxTop = Math.round(top + height);
+    console.log('bounds', boundingRect);
+    for(let i = minLeft; i<= maxLeft; i++) {
+      for(let j= minTop; j<= maxTop; j++) {
+          mask[j][i] = this._containsPoint({ x: i, y: j }, center) ? 1: 0;
+      }
+    }
+  }
+
+}

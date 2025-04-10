@@ -1,10 +1,22 @@
 import { Rect, FabricText } from 'fabric';
 import { Path, Point, Size, Matrix } from 'paper';
+import { STYLE } from './constants';
+
+Rect.prototype.setControlVisible('tl', true);
+Rect.prototype.setControlVisible('tr', true);
+Rect.prototype.setControlVisible('br', true);
+Rect.prototype.setControlVisible('bl', true);
+Rect.prototype.setControlVisible('ml', true);
+Rect.prototype.setControlVisible('mt', true);
+Rect.prototype.setControlVisible('mr', true);
+Rect.prototype.setControlVisible('mb', true);
+Rect.prototype.setControlVisible('mtr', false);
+
 
 export default class LabeledRect extends Rect {
   constructor(options = {}) {
     super(options);
-    this.label = options.label || '';
+    this.label = options.label || 'rect';
     this.labelText = new FabricText(this.label, {
       fontSize: 16,
       fill: 'black',
@@ -18,6 +30,8 @@ export default class LabeledRect extends Rect {
       evented: false,
       hasBorders: false
     });
+    this.fill = options.fill || STYLE.fillColor; // 填充颜色
+    this.stroke = options.stroke || STYLE.strokeColor; // 边框颜色
   }
 
   _render(ctx) {
@@ -27,7 +41,7 @@ export default class LabeledRect extends Rect {
     ctx.font = "16px Arial";
 
     // this.labelText._render.bind(this.labelText)(ctx);
-    ctx.fillText(this.label, -this.width / 2, -this.height / 2 + 16);
+    ctx.fillText(this.label, -this.width / 2, -this.height / 2 - 4);
 
     // ctx.restore();
     // this.labelText._render.bind(this.labelText)(ctx);
@@ -65,8 +79,17 @@ export default class LabeledRect extends Rect {
 
   }
 
-  scale() {
-
+  expand(expand = 10) {
+    console.log('expand', expand);
+    // this.scale({
+    //   x: 1.2,
+    //   y: 1.2
+    // });
+    this.set({
+      width: this.width + expand,
+      height: this.height + expand,
+    })
+    this.canvas.requestRenderAll();
   }
 
   // set(key, value) {
@@ -88,7 +111,42 @@ export default class LabeledRect extends Rect {
   //   }
   // }
 
-  toObject(propertiesToInclude = []) {
-    return super.toObject(propertiesToInclude.concat(['label']));
+  toJSON(left, top, scale) {
+    return {
+        type: this.type,
+        width: Math.round(this.width * this.scaleX / scale),
+        height: Math.round(this.height * this.scaleY / scale),
+        left: Math.round((this.left - left)/scale),
+        top: Math.round((this.top - top)/scale),
+        label: this.label
+    }
+  }
+
+  _containsPoint(point) {
+    const flag = super.containsPoint(point);
+    if(!flag) {
+      return false;
+    }
+    if(point.x >= this.left && point.x <= this.left + this.width &&
+      point.y >= this.top && point.y <= this.top + this.height) {
+      return true;
+    }
+    return false;
+  }
+
+  getMask(mask) {
+    const boundingRect = this.getBoundingRect();
+    const { left, top, width, height } = boundingRect;
+    console.log('bounds', boundingRect);
+    const minLeft = Math.floor(left);
+    const minTop = Math.floor(top);
+    const maxLeft = Math.round(left + width);
+    const maxTop = Math.round(top + height);
+    
+    for(let i=minLeft; i<=maxLeft; i++) {
+      for(let j=minTop; j<=maxTop; j++) {
+          mask[j][i] = 1;
+      }
+    }
   }
 }

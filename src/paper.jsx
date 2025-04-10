@@ -7,10 +7,10 @@ export default function Paper() {
   useEffect(() => {
     var canvas = document.getElementById('canvas');
 		// Create an empty project and a view for the canvas:
-paper.setup(canvas);
-const { view } = paper;
-var topLeft = new Point(100, 100);
-var rectSize = new Size(100, 100);
+    paper.setup(canvas);
+    const { view } = paper;
+    var topLeft = new Point(100, 100);
+    var rectSize = new Size(100, 100);
     var square = new Path.Rectangle(topLeft, rectSize);
     
     // Make a ring using subtraction of two circles:
