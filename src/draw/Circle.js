@@ -57,7 +57,9 @@ export default class LabeledCircle extends Circle {
     console.log('bounds', boundingRect);
     for(let i = minLeft; i<= maxLeft; i++) {
       for(let j= minTop; j<= maxTop; j++) {
-          mask[j][i] = this._containsPoint({ x: i, y: j }, center) ? 1: 0;
+          if(this._containsPoint({ x: i, y: j }, center)) {
+            mask[j][i] = 1;
+          }
       }
     }
   }

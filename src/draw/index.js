@@ -42,13 +42,14 @@ export default class Editor {
     this.getImageBounds = this.getImageBounds.bind(this);
     this.addMovementConstraints = this.addMovementConstraints.bind(this);
 
-    const canvasDom = container.querySelector('canvas');
+    const canvasDom = document.querySelector('canvas');
     this.canvas = new Canvas(canvasDom);
 
-    const noshowCanvas = document.getElementById('noshowCanvas');
+    const noshowCanvas = document.createElement('canvas');
+    container.appendChild(noshowCanvas);
     noshowCanvas.width = container.clientWidth;
     noshowCanvas.height = container.clientHeight;
-
+    noshowCanvas.style.display = 'none';
 
     paper.setup(noshowCanvas);
 
@@ -747,6 +748,7 @@ export default class Editor {
   }
 
   setImage(src) {
+    console.log('src', src);
     this.imgUrl = src;
     FabricImage.fromURL(src).then((img) => {
       const { canvas } = this;

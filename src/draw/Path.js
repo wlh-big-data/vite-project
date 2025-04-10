@@ -44,7 +44,7 @@ export default class LabeledPath extends Path {
     }
   }
 
-  getTransformedPathData(left, top, scale) {
+  getTransformedPathData(left = 0, top = 0, scale = 1) {
     // 获取变换矩阵
     const matrix = this.calcTransformMatrix();
     // console.log('matrix', matrix, this.width, this.height);
@@ -134,17 +134,15 @@ export default class LabeledPath extends Path {
     const paperPath = this.toPaperObject();
     const boundingRect = this.getBoundingRect();
     const { left, top, width, height } = boundingRect;
-    console.log('bounds', boundingRect);
     const minLeft = Math.floor(left);
     const minTop = Math.floor(top);
     const maxLeft = Math.round(left + width);
     const maxTop = Math.round(top + height);
-    console.log('bounds', boundingRect);
     for(let i = minLeft; i<= maxLeft; i++) {
       for(let j= minTop; j<= maxTop; j++) {
         const paperPoint = new Point(i, j);
         if(paperPath.contains(paperPoint)) {
-          mask[j][i] = 1;
+          mask[j]  && (mask[j][i] = 1);
         }
       }
     }

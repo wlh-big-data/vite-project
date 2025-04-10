@@ -95,6 +95,28 @@ export default class LabeledPolygon extends Polygon {
     // this.on('modified', () => {
     //   console.log('Polygon modified, new points:', this.getTransformedPoints());
     // });
+    this.on('modified', () => this.validatePosition(this));
+  }
+  validatePosition(polygon) {
+    const expected = polygon.getCenterPoint();
+    const calculated = polygon._getTransformedPoints()
+      .reduce((acc, p) => {
+        acc.x += p.x;
+        acc.y += p.y;
+        return acc;
+      }, {x:0, y:0});
+    
+    calculated.x /= polygon.points.length;
+    calculated.y /= polygon.points.length;
+  
+    console.log('位置校验:', {
+      center: expected,
+      calcenter: calculated,
+      diff: {
+        x: calculated.x - expected.x,
+        y: calculated.y - expected.y
+      }
+    });
   }
   _render(ctx) {
     super._render(ctx);
@@ -145,33 +167,59 @@ export default class LabeledPolygon extends Polygon {
   }
 
   // 修改方法定义（移除不必要参数）
-  getTransformedPoints(left = 0, top = 0, scale = 1) {
+  _getTransformedPoints(left = 0, top = 0, scale = 1) {
     // 获取组合变换矩阵（包含缩放、旋转、平移）
     const matrix = this.calcTransformMatrix();
-    console.log('Transform Matrix:', matrix);
-    matrix[4] = matrix[4] - this.width/2 * matrix[0];
-    matrix[5] = matrix[5] - this.height/2 * matrix[3];
+    const center = this.getCenterPoint();
+    console.log('width height', center, this.width, this.height, this.left, this.top, matrix);
 
-    // 转换原始点到实际坐标
-    return this.points.map(p => {
-      // 应用变换矩阵到每个点
+    return this.points.map((p, index) => {
+      const adjustedPoint = new FabricPoint(
+        p.x - center.x,
+        p.y - center.y
+      );
       const transformed = util.transformPoint(
-        new FabricPoint(p.x, p.y),
+        adjustedPoint,
         matrix
       );
 
-      return { 
+      const point = { 
         x: (transformed.x),
         y: (transformed.y)
       };
-    }).map((item, index) => {
-      const point = {
-        x: Math.round((item.x - left)/scale),
-        y: Math.round((item.y - top)/scale)
-      }
-      console.log('point' + index, point)
+      console.log('point' + index , p, point);
       return point;
-    });
+    }).map((p) => {
+      return {
+        x: Math.round((p.x - left)/scale),
+        y: Math.round((p.y - top)/scale)
+      }
+    })
+
+    // console.log('Transform Matrix:', matrix);
+    // matrix[4] = matrix[4] - this.width/2 * matrix[0];
+    // matrix[5] = matrix[5] - this.height/2 * matrix[3];
+
+    // // 转换原始点到实际坐标
+    // return this.points.map(p => {
+    //   // 应用变换矩阵到每个点
+    //   const transformed = util.transformPoint(
+    //     new FabricPoint(p.x, p.y),
+    //     matrix
+    //   );
+
+    //   return { 
+    //     x: (transformed.x),
+    //     y: (transformed.y)
+    //   };
+    // }).map((item, index) => {
+    //   const point = {
+    //     x: Math.round((item.x - left)/scale),
+    //     y: Math.round((item.y - top)/scale)
+    //   }
+    //   console.log('point' + index, point)
+    //   return point;
+    // });
   }
 
   expand(expand) {
@@ -188,7 +236,7 @@ export default class LabeledPolygon extends Polygon {
   }
 
   toJSON(left, top, scale) {
-    const data = this.getTransformedPoints(left, top, scale);
+    const data = this._getTransformedPoints(left, top, scale);
     console.log('points', data, left, top, scale);
     return {
       type: this.type,
