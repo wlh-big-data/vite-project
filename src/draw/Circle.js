@@ -14,7 +14,7 @@ export default class LabeledCircle extends Circle {
     super._render(ctx); // 调用父类的渲染方法 
     ctx.fillStyle = "rgb(0,0,0)"; // 设置文本颜色为黑色
     ctx.font = "16px Arial"; // 设置字体样式为 Arial，大小为 16px
-    ctx.fillText(this.label, -this.radius, -this.radius - 4); // 在圆形中心绘制标签文本
+    ctx.fillText(this.label, -this.radius + 4, -this.radius + 16); // 在圆形中心绘制标签文本
   }
 
   toPaperObject() {

@@ -14,7 +14,7 @@ export default class LabeledEllipse extends Ellipse {
     super._render(ctx);
     ctx.fillStyle = 'rgb(0,0,0)';
     ctx.font = "16px Arial";
-    ctx.fillText(this.label, -this.width / 2, -this.height / 2 - 4);
+    ctx.fillText(this.label, -this.width / 2 + 4, -this.height / 2 + 16);
   }
 
   toPaperObject() {

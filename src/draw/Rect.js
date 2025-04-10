@@ -41,7 +41,7 @@ export default class LabeledRect extends Rect {
     ctx.font = "16px Arial";
 
     // this.labelText._render.bind(this.labelText)(ctx);
-    ctx.fillText(this.label, -this.width / 2, -this.height / 2 - 4);
+    ctx.fillText(this.label, -this.width / 2 + 4, -this.height / 2 + 16);
 
     // ctx.restore();
     // this.labelText._render.bind(this.labelText)(ctx);
