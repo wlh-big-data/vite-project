@@ -12,6 +12,9 @@ export default class LabeledEllipse extends Ellipse {
 
   _render(ctx) {
     super._render(ctx);
+    if(this.isCreating) {
+      return;
+    }
     ctx.fillStyle = 'rgb(0,0,0)';
     ctx.font = "16px Arial";
     ctx.fillText(this.label, -this.width / 2 + 4, -this.height / 2 + 16);
@@ -46,6 +49,7 @@ export default class LabeledEllipse extends Ellipse {
   }
 
   toJSON(left, top, scale) {
+    console.log('ellipse', this);
     return {
       type: this.type,
       rx: Math.round(this.rx * (this.scaleX) / scale),

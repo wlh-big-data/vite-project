@@ -117,17 +117,22 @@ export default class LabeledPolygon extends Polygon {
         y: calculated.y - expected.y
       }
     });
+    this.diff = {
+      x: calculated.x - expected.x,
+      y: calculated.y - expected.y
+    }
   }
   _render(ctx) {
     super._render(ctx);
+    if(this.isCreating) {
+      return;
+    }
     ctx.fillStyle = 'rgb(0,0,0)';
     ctx.font = "16px Arial";
     ctx.fillText(this.label, -this.width / 2, -this.height / 2 + 16);
   }
 
   getPathData() {
-    
-    console.log('this.points', this.points);
     let path = '';
     this.points.forEach((item, index) => {
       if (index === 0) {
@@ -138,19 +143,13 @@ export default class LabeledPolygon extends Polygon {
         path += `L${item.x},${item.y}`;
       }
     });
-    console.log('path', path);
-    // console.log('pathData', pathData);
     return path;
   }
 
   toPaperObject() {
     const paper = new PaperPath(this.getPathData());
-    console.log('paper', paper);
     paper.position = new Point(0, 0);
-
     const matrix = this.calcTransformMatrix();
-    
-    console.log('paper object matrix', matrix);
     const paperMatrix = new Matrix(
       matrix[0], matrix[1],
       matrix[2], matrix[3],
@@ -166,7 +165,6 @@ export default class LabeledPolygon extends Polygon {
     // 获取组合变换矩阵（包含缩放、旋转、平移）
     const matrix = this.calcTransformMatrix();
     const center = this.getCenterPoint();
-    console.log('width height', center, this.width, this.height, this.left, this.top, matrix);
 
     return this.points.map((p, index) => {
       const adjustedPoint = new FabricPoint(
@@ -182,7 +180,6 @@ export default class LabeledPolygon extends Polygon {
         x: (transformed.x),
         y: (transformed.y)
       };
-      console.log('point' + index , p, point);
       return point;
     }).map((p) => {
       return {
@@ -201,7 +198,13 @@ export default class LabeledPolygon extends Polygon {
   }
 
   toJSON(left, top, scale) {
-    const data = this._getTransformedPoints(left, top, scale);
+    const data = this._getTransformedPoints().map((item) => {
+      return {
+        x: item.x - (this.diff?.x || 0),
+        y: item.y - (this.diff?.y || 0),
+      }
+    });
+    console.log('sss', this.toPaperObject());
     console.log('points', data, left, top, scale);
     return {
       type: this.type,

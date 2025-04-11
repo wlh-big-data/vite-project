@@ -1,11 +1,13 @@
 import { Canvas, FabricImage, FabricObject } from "fabric";
 import paper from 'paper';
+import EventBus from './EventBus';
 import LabeledPolygon from './Polygon';
 import LabeledRect from './Rect';
 import Polyline from './Polyline';
 import Path from './Path';
 import Ellipse from "./Ellipse";
 import Circle from "./Circle";
+import { EVENTS } from "./constants";
 
 FabricObject.prototype.setControlVisible('mtr', false);
 
@@ -15,19 +17,21 @@ const CREATE_TYPE = {
   ELLIPSE: 'ellipse',
   RECT: 'rect',
   PATH: 'path',
-  NONE: 0,
+  NONE: 'none',
 }
 
 export const EditorType = CREATE_TYPE;
 
-export default class Editor {
+export default class Editor extends EventBus {
 
   constructor({
     container,
     imgUrl,
   }) {
+    super();
     this.canvasDom = container;
     this.readonly = true;
+    this.selected = [];
 
     if (!container) {
       throw new Error('container is required');
@@ -37,7 +41,6 @@ export default class Editor {
     this.drag = this.drag.bind(this);
     this.keydown = this.keydown.bind(this);
     this.setCreateType = this.setCreateType.bind(this);
-    this.setReadonly = this.setReadonly.bind(this);
 
     this.getImageBounds = this.getImageBounds.bind(this);
     this.addMovementConstraints = this.addMovementConstraints.bind(this);
@@ -86,12 +89,10 @@ export default class Editor {
     this.endDrawingCircle = this.endDrawingCircle.bind(this);
     this.drawingCircle = this.drawingCircle.bind(this);
 
-    this.selectObjects = this.selectObjects.bind(this);
     this.getSelection = this.getSelection.bind(this);
     this.addPath = this.addPath.bind(this);
 
     document.addEventListener('keydown', this.keydown);
-    this.selectObjects();
 
     this.canvas.on('mouse:down', this.startDrawingEllipse);
     this.canvas.on('mouse:move', this.drawingEllipse);
@@ -108,19 +109,47 @@ export default class Editor {
     this.canvas.on('mouse:down', this.startDrawingCircle);
     this.canvas.on('mouse:move', this.drawingCircle);
     this.canvas.on('mouse:up', this.endDrawingCircle);
+    this.canvas.on('mouse:up', (options) => {
+      if(this.createType === CREATE_TYPE.NONE) {
+        if(options.target) {
+          const { scale } = this;
+          const { left, top } = this.img;
+          const { scenePoint } = options;
+          const { x, y } = scenePoint;
+          const x1 = Math.round((x - left) / scale);
+          const y1 = Math.round((y - top) / scale);
+          if(options.target.type === 'image') {
+            // 点击到图片
+            this.emit(EVENTS.CLICK, {
+              point: {
+                x: x1,
+                y: y1,
+              }
+            })
+          }else{
+            // 点击到图形
+            this.emit(EVENTS.CLICK, {
+              point: {
+                x: x1,
+                y: y1,
+              },
+              target: options.target,
+            })
+          }
+        }
+      }
+    })    
 
 
     this.canvas.on('selection:created', (options) => {
-      // console.log('selection:created', options);
-      // this.setReadonly(true);
+      console.log('触发selected');
       this.selected = [];
       this.selected.push(...options.selected);
     });
 
 
     this.canvas.on('selection:updated', (options) => {
-      // console.log('selection:updated', options);
-      // this.setReadonly(true);
+      console.log('触发selected update');
       this.selected.push(...options.selected);
       options.deselected.forEach((item) => {
         if (this.selected.indexOf(item) > -1) {
@@ -129,15 +158,31 @@ export default class Editor {
       })
     });
     this.canvas.on('selection:cleared', (options) => {
-      // console.log('selection:cleared', options);
+      console.log('触发selected cleared');
       this.selected = [];
-      // this.setReadonly(false);
     });
+
+    this.drag();
 
   }
 
   getSelection() {
     return this.selected;
+  }
+
+  setReadonly(flag = false) {
+    this.readonly = flag;
+    console.log('this.readonly', this.readonly);
+  }
+
+  invertSelection() {
+    const objects = this.canvas.getObjects().filter((item) => {
+      return (item.type !== 'image');
+    });
+    if(objects.length === 0) {
+      return;
+    }
+    this.canvas.renderAll();
   }
 
   addPath(left, right, pathData) {
@@ -146,6 +191,41 @@ export default class Editor {
 
     const path = new Path(pathData, {});
     this.canvas.add(path);
+    this.canvas.renderAll();
+  }
+
+  removeObjects() {
+    const objects = this.canvas.getObjects();
+    objects.filter((item) => {
+      return (item.type !== 'image');
+    }).forEach((item) => {
+      this.canvas.remove(item);
+    })
+    this.canvas.renderAll();
+  }
+
+  removeObject(object) {
+    this.canvas.remove(object);
+    this.canvas.renderAll();
+  }
+
+  addObject(object) {
+    this.canvas.add(object);
+    this.canvas.renderAll();
+  }
+
+  addPolygon(points) {
+    const { img, scale } = this;
+    const { left, top } = img;
+    const polygon = new LabeledPolygon(points.map((item) => {
+      return {
+        x: (item.x) * scale + left,
+        y: (item.y) * scale + top,
+      }
+    }), {
+      objectCaching: false,
+    });
+    this.canvas.add(polygon);
     this.canvas.renderAll();
   }
 
@@ -264,24 +344,15 @@ export default class Editor {
       bottom: this.img.top + this.img.height * this.img.scaleY
     };
   }
-  setReadonly(flag) {
-    this.readonly = flag;
-    console.log('flag', flag);
-    if (flag) {
-      this.setCreateType(CREATE_TYPE.NONE);
-    }
-  }
 
   setCreateType(createType) {
     console.log('createType', createType);
     this.createType = createType;
-    this.readonly = false;
     this.isDrawing = false;
     this.currentShape = null;
-  }
-
-  selectObjects() {
-
+    if(createType !== CREATE_TYPE.NONE) {
+      this.setReadonly(false);
+    }
   }
 
   keydown(e) {
@@ -309,6 +380,12 @@ export default class Editor {
   }
 
   startDrawingCircle(options) {
+    if(this.readonly) {
+      return;
+    }
+    if(options.target && options.target.type !== 'image') {
+      return;
+    }
     if (!(this.createType === CREATE_TYPE.CIRCLE && this.checkImgBounds(options))) {
       return;
     }
@@ -389,6 +466,12 @@ export default class Editor {
   }
 
   startDrawingEllipse(options) {
+    if(this.readonly) {
+      return;
+    }
+    if(options.target && options.target.type !== 'image') {
+      return;
+    }
     if (this.createType !== CREATE_TYPE.ELLIPSE || !this.checkImgBounds(options)) {
       return;
     }
@@ -438,6 +521,12 @@ export default class Editor {
   }
 
   startDrawingPoly(options) {
+    if(this.readonly) {
+      return;
+    }
+    if(options.target && options.target.type !== 'image') {
+      return;
+    }
     if (!(this.createType === CREATE_TYPE.POLYGON && this.checkImgBounds(options))) {
       return;
     }
@@ -481,11 +570,7 @@ export default class Editor {
     if (!(this.createType === CREATE_TYPE.POLYGON && this.isDrawing && this.checkImgBounds(options))) {
       return;
     }
-    console.log('end drawing', options);
-    // 双击会触发单击，所以删除最后的两个点
     this.polygonPoints.pop();
-    this.polygonPoints.pop();
-
     const { polygonPoints, polygon, canvas } = this;
       // 确保至少有三个点才能形成多边形
     if (polygonPoints.length >= 3) {
@@ -500,6 +585,22 @@ export default class Editor {
     this.isDrawing = false;
   }
 
+  zoomOut() {
+    const { canvas } = this;
+    const currentZoom = canvas.getZoom();
+    const newZoom = Math.max(0.05, currentZoom + 0.05);
+    canvas.zoomToPoint(canvas.getCenterPoint(), newZoom);
+    canvas.renderAll();
+  }
+
+  zoomIn() {
+    const { canvas } = this;
+    const currentZoom = canvas.getZoom();
+    const newZoom = Math.min(2, currentZoom - 0.05);
+    console.log();
+    canvas.zoomToPoint(canvas.getCenterPoint(), newZoom);
+    canvas.renderAll();
+  }
 
   zoom() {
     const zoomStep = 0.05;
@@ -509,7 +610,6 @@ export default class Editor {
       const { e } = options;
       const delta = Math.sign(e.deltaY);
       const currentZoom = canvas.getZoom();
-      console.log('currentZoom', currentZoom);
       let newZoom;
 
       if (delta < 0) {
@@ -534,9 +634,7 @@ export default class Editor {
   getJSONObject() {
     const objects = this.canvas.getObjects();
     const { img } = this;
-    console.log('toJSON', img.left, img.top, this.scale);
     return objects.filter((item) => {
-      console.log('item', item.type, item.type === "image ");
       return (item.type !== 'image');
     }).map((item) => {
       return item.toJSON(img.left, img.top, this.scale);
@@ -544,9 +642,21 @@ export default class Editor {
   }
 
   startDrawingRect(options) {
+    console.log('options', options, this);
+    if(this.readonly) {
+      return;
+    }
+    if(options.target && options.target.type !== 'image') {
+      return;
+    }
     if (this.createType !== CREATE_TYPE.RECT || !this.checkImgBounds(options)) {
       return;
     }
+    
+    console.log('options', options);
+    // if(!(options.target && options.target.type === 'image')) {
+    //   return;
+    // }
     console.log('startDrawingRect');
     this.isDrawing = true;
     this.startPoint = options.scenePoint;
@@ -556,7 +666,6 @@ export default class Editor {
       width: 0,
       height: 0,
       strokeWidth: 1,
-      // label: 'ab'
     });
     this.canvas.add(this.currentShape);
   }
@@ -574,7 +683,7 @@ export default class Editor {
       width: (right - left),
       height: (bottom - top),
       left,
-      top
+      top,
     });
     canvas.renderAll();
   }
@@ -612,13 +721,18 @@ export default class Editor {
     const { canvas } = this;
 
     canvas.on('mouse:down', (options) => {
-      console.log('options.e', options.e);
-      //  if (options.e.button === 1) { // 中键拖动
-      console.log('options.e', options, this.img);
-      console.log('options', (options.scenePoint.x - this.img.left) / this.scale,
-        (options.scenePoint.y - this.img.top) / this.scale);
-      isDragging = true;
-      lastPointerPosition = canvas.getPointer(options.e);
+      if(!this.readonly) {
+        return;
+      }
+      if(options.target && options.target.type === 'image') {
+        console.log('options.e', options.e);
+        //  if (options.e.button === 1) { // 中键拖动
+        console.log('options.e', options, this.img);
+        console.log('options', (options.scenePoint.x - this.img.left) / this.scale,
+          (options.scenePoint.y - this.img.top) / this.scale);
+        isDragging = true;
+        lastPointerPosition = canvas.getPointer(options.e);
+      }
       //  }
     });
 
@@ -654,10 +768,12 @@ export default class Editor {
     const leftPath = left.toPaperObject();
     const rightPath = right.toPaperObject();
     const path = leftPath.unite(rightPath);
+    this.canvas.add(new Path(path.pathData));
     this.canvas.remove(left);
     this.canvas.remove(right);
-    this.canvas.add(new Path(path.pathData));
-    this.canvas.renderAll();
+    this.canvas.discardActiveObject();
+    this.canvas.requestRenderAll();
+    
   }
   intersect(left, right) {
     const leftPath = left.toPaperObject();
@@ -669,7 +785,8 @@ export default class Editor {
     if (path.pathData) {
       this.canvas.add(new Path(path.pathData));
     }
-    this.canvas.renderAll();
+    this.canvas.discardActiveObject();
+    this.canvas.requestRenderAll();
   }
   substract(left, right) {
     const leftPath = left.toPaperObject();
@@ -680,7 +797,8 @@ export default class Editor {
     if(path.pathData) {
       this.canvas.add(new Path(path.pathData));
     }
-    this.canvas.renderAll();
+    this.canvas.discardActiveObject();
+    this.canvas.requestRenderAll();
   }
 
   exclude(left, right) {
@@ -692,7 +810,8 @@ export default class Editor {
     if(path.pathData) {
       this.canvas.add(new Path(path.pathData));
     }
-    this.canvas.renderAll();
+    this.canvas.discardActiveObject();
+    this.canvas.requestRenderAll();
   }
 
   loadJSON(json = []) {
@@ -764,30 +883,14 @@ export default class Editor {
       img.set({
         left: (canvas.width - width) / 2,
         top: (canvas.height - height) / 2,
-        // width: width,
-        // height: height,
         scaleX: scale,
         scaleY: scale,
         selectable: false,
       });
       this.img = img;
-      // console.log('this.img size', img.width, img.height);
 
       canvas.insertAt(0, img);
-      // const path = new Path('M 100,100 L 200,100 L 200,200 L 100,200 Z');
-      // canvas.add(path);
-      // const polygon = new LabeledPolygon([{
-      //   x: 0,
-      //   y: 0
-      // }, {
-      //   x: 100,
-      //   y: 0
-      // }, {
-      //   x: 100,
-      //   y: 100
-      // }]);
-      // this.canvas.add(polygon);
-
+      this.emit('load', {});
     });
   }
 

@@ -4,5 +4,6 @@ export const STYLE = {
 }
 
 export const EVENTS = {
-    LOAD: 'load'
+    LOAD: 'load',
+    CLICK: 'click'
 }

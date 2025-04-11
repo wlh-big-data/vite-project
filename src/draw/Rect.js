@@ -37,16 +37,12 @@ export default class LabeledRect extends Rect {
   _render(ctx) {
     super._render(ctx);
     // ctx.save();
+    if(this.isCreating) {
+      return;
+    }
     ctx.fillStyle = 'rgb(0,0,0)';
     ctx.font = "16px Arial";
-
-    // this.labelText._render.bind(this.labelText)(ctx);
     ctx.fillText(this.label, -this.width / 2 + 4, -this.height / 2 + 16);
-
-    // ctx.restore();
-    // this.labelText._render.bind(this.labelText)(ctx);
-    // Update label text content and position
-
   }
 
   toPaperObject() {
@@ -118,7 +114,8 @@ export default class LabeledRect extends Rect {
         height: Math.round(this.height * this.scaleY / scale),
         left: Math.round((this.left - left)/scale),
         top: Math.round((this.top - top)/scale),
-        label: this.label
+        label: this.label,
+        isCreating: this.isCreating,
     }
   }
 
