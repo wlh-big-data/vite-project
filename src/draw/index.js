@@ -179,8 +179,37 @@ export default class Editor extends EventBus {
     const objects = this.canvas.getObjects().filter((item) => {
       return (item.type !== 'image');
     });
+    const { img, scale } = this;
+    const { left, top, width, height } = img;
+    console.log('left, top', left, top, width, height);
+    const rect = new LabeledRect({
+      width: width * scale,
+      height: height * scale,
+      left,
+      top,
+    });
+
     if(objects.length === 0) {
-      return;
+      this.canvas.add(rect);
+      this.canvas.setActiveObject(rect);
+    }else {
+      console.log('object', objects);
+      let result = objects[0].toPaperObject();
+      objects.forEach((item, index) => {
+
+        if(index > 0) {
+          result = result.unite(item.toPaperObject());
+        }
+      });
+      const rectPaper = rect.toPaperObject();
+      const path = rectPaper.exclude(result);
+      this.canvas.remove(rect);
+      this.canvas.remove(...objects);
+      if (path.pathData) {
+        this.canvas.add(new Path(path.pathData));
+      }
+     
+      this.canvas.requestRenderAll();
     }
     this.canvas.renderAll();
   }
@@ -390,7 +419,6 @@ export default class Editor extends EventBus {
       return;
     }
     const { scenePoint } = options;
-    console.log('start drawing circle');
     this.isDrawing = true;
     this.startPoint = scenePoint;
     this.currentShape = new Circle({
@@ -597,7 +625,6 @@ export default class Editor extends EventBus {
     const { canvas } = this;
     const currentZoom = canvas.getZoom();
     const newZoom = Math.min(2, currentZoom - 0.05);
-    console.log();
     canvas.zoomToPoint(canvas.getCenterPoint(), newZoom);
     canvas.renderAll();
   }
