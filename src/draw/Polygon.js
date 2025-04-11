@@ -147,15 +147,10 @@ export default class LabeledPolygon extends Polygon {
     const paper = new PaperPath(this.getPathData());
     console.log('paper', paper);
     paper.position = new Point(0, 0);
-    // console.log(paper.position, paper.matrix);
 
     const matrix = this.calcTransformMatrix();
-    // const center = this.getCenterPoint();
-    // const ownMathrix = this.calcOwnMatrix();
     
     console.log('paper object matrix', matrix);
-    // 转换为 Paper.js 矩阵格式 [a, b, c, d, tx, ty]
-    // console.log(matrix[4] - this.width/2 * matrix[0] - paper.position.x, matrix[5] - this.height/2 * matrix[3] - paper.position.y);
     const paperMatrix = new Matrix(
       matrix[0], matrix[1],
       matrix[2], matrix[3],
@@ -194,40 +189,10 @@ export default class LabeledPolygon extends Polygon {
         x: Math.round((p.x - left)/scale),
         y: Math.round((p.y - top)/scale)
       }
-    })
-
-    // console.log('Transform Matrix:', matrix);
-    // matrix[4] = matrix[4] - this.width/2 * matrix[0];
-    // matrix[5] = matrix[5] - this.height/2 * matrix[3];
-
-    // // 转换原始点到实际坐标
-    // return this.points.map(p => {
-    //   // 应用变换矩阵到每个点
-    //   const transformed = util.transformPoint(
-    //     new FabricPoint(p.x, p.y),
-    //     matrix
-    //   );
-
-    //   return { 
-    //     x: (transformed.x),
-    //     y: (transformed.y)
-    //   };
-    // }).map((item, index) => {
-    //   const point = {
-    //     x: Math.round((item.x - left)/scale),
-    //     y: Math.round((item.y - top)/scale)
-    //   }
-    //   console.log('point' + index, point)
-    //   return point;
-    // });
+    });
   }
 
   expand(expand) {
-    console.log('expand', expand);
-    // this.scale({
-    //   x: 1.2,
-    //   y: 1.2
-    // });
     this.left = this.left - expand;
     this.top = this.top - expand;
     this.width = this.width + expand * 2;
@@ -246,10 +211,6 @@ export default class LabeledPolygon extends Polygon {
   }
 
   _containsPoint(point) {
-    // const flag = super.containsPoint(point);
-    // if(!flag) {
-    //   return false;
-    // }
     const { x, y } = point;
     const polygon = this.points;
     let inside = false;

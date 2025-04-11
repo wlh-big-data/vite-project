@@ -23,9 +23,6 @@ export default class LabeledPath extends Path {
     paper.position = new Point(0, 0);
 
     const matrix = this.calcTransformMatrix();
-    
-    console.log('paper object matrix', matrix, this.width, this.height);
-    // 转换为 Paper.js 矩阵格式 [a, b, c, d, tx, ty]
     const paperMatrix = new Matrix(
       matrix[0], matrix[1],
       matrix[2], matrix[3],
@@ -47,15 +44,10 @@ export default class LabeledPath extends Path {
   getTransformedPathData(left = 0, top = 0, scale = 1) {
     // 获取变换矩阵
     const matrix = this.calcTransformMatrix();
-    // console.log('matrix', matrix, this.width, this.height);
-    // matrix[4] = matrix[4] - this.width/2 * matrix[0];
-    // matrix[5] = matrix[5] - this.height/2 * matrix[3];
-    console.log('matrix', matrix);
     matrix[0] = matrix[0] / scale;
     matrix[3] = matrix[3] / scale;
     matrix[4] = (matrix[4] - left - this.width / 2)/scale;
     matrix[5] = (matrix[5] - top - this.height / 2)/scale;
-    console.log('matrix', matrix);
     
     // 解析原始路径数据
     const transformedCommands = [];
