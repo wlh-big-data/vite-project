@@ -1,18 +1,39 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Editor, { EditorType } from '../draw/index';
+import { createBmp, saveBMP } from '../draw/utils';
+import { Point } from 'fabric';
+import Circle from '../draw/Circle'
+import Rect from '../draw/Rect'
 import './index.css';
 
 export default function Draw(props) {
   const canvasRef = useRef(null);
   const canvasDomRef = useRef(null);
-  const [edit, setEdit] = useState(false);
+  const [edit, setEdit] = useState(true);
   const editorRef = useRef();
-  const typeRef = useRef('');
   useEffect(() => {
     const editor = new Editor({
       container: canvasDomRef.current,
       imgUrl: '/grid.png',
     })
+    editor.on('load', () => {
+      console.log('editor load', editor);
+    })
+    // editor.on('click', (options) => {
+    //   editor.addPolygon([{
+    //     x: 0,
+    //     y: 0
+    //   }, {
+    //     x: 50,
+    //     y: 50,
+    //   }, {
+    //     x: 0,
+    //     y: 50
+    //   }]);
+    //   if(options.target) {
+    //     editorRef.current.removeObject(options.target)
+    //   }
+    // })
     editorRef.current = editor;
     return () => {
       editor.destroy();
@@ -26,17 +47,25 @@ export default function Draw(props) {
       <div className={"opers"}>
         <button onClick={() => {
           setEdit(!edit);
-          editorRef.current.setReadonly(edit);
+          editorRef.current.setReadonly(!edit);
         }}>{edit ? '编辑' : '查看'}</button>
         <button>保存</button>
         <button onClick={() => {
           console.log('juxing');
+          setEdit(true);
+          editorRef.current.setReadonly(false);
           editorRef.current.setCreateType(EditorType.RECT);
         }}>矩形</button>
         <button onClick={() => {
+          editorRef.current.setReadonly(false);
           editorRef.current.setCreateType(EditorType.ELLIPSE);
         }}>椭圆</button>
         <button onClick={() => {
+          editorRef.current.setReadonly(false);
+          editorRef.current.setCreateType(EditorType.CIRCLE);
+        }}>圆</button>
+        <button onClick={() => {
+          editorRef.current.setReadonly(false);
           editorRef.current.setCreateType(EditorType.POLYGON);
         }}>多边形</button>
         <button onClick={() => {
@@ -50,35 +79,134 @@ export default function Draw(props) {
           })
         }}>获取选中物体</button>
         <button onClick={() => {
+          const objects = editorRef.current.getJSONObject();
+          console.log('jsonData', objects, JSON.stringify(objects));
+        }}>转JSON</button>
+        <button onClick={() => {
+          editorRef.current.removeObjects();
+        }}>移除物体</button>
+        <button onClick={() => {
+          editorRef.current.invertSelection();
+        }}>反选</button>
+        <button onClick={() => {
+          editorRef.current.addPolygon([{
+            x: 0,
+            y: 0
+          }, {
+            x: 50,
+            y: 50,
+          }, {
+            x: 0,
+            y: 50
+          }])
+        }}>添加多边形</button>
+        <button onClick={() => {
+          const objects = editorRef.current.getJSONObject();
+          // editorRef.current.loadJSON([
+          //   {"type":"rect","width":51,"height":50,"left":49,"top":50,"label":"rect"},
+          //   {"type":"circle","radius":26,"left":148,"top":99,"label":"circle"},
+          //   {"type":"ellipse","rx":24,"ry":48,"left":201,"top":153,"label":"ellipse"}]);
+          editorRef.current.loadJSON([{"type":"rect","width":81,"height":63,"left":-86,"top":-38,"label":"rect"},{"type":"rect","width":108,"height":92,"left":-25,"top":-46,"label":"rect"},{"type":"path","label":"path","pathData":"M 618.58 195.90 L 618.58 175.14 L 557.38 175.14 L 557.38 112.30 L 618.58 112.30 L 618.58 103.55 L 726.78 103.55 L 726.78 195.90 Z"}]);
+        }}>加载JSON</button>
+        <button onClick={() => {
+          const objects = editorRef.current.getJSONObject();
+          editorRef.current.loadJSON(objects);
+        }}>获取json并加载</button>
+        <button onClick={() => {
           const selections = editorRef.current.getSelection();
           console.log(selections);
-          if(selections.length == 2) {
-            const left = selections[0].toPaperObject();
-            const right = selections[1].toPaperObject();
-            const newObject = left.intersect(right);
-            console.log(left, right, newObject);
-            if(newObject) {
-              editorRef.current.addPath(left, right, newObject.pathData);
-            }
+          if (selections.length == 2) {
+            // const left = selections[0].toPaperObject();
+            // const right = selections[1].toPaperObject();
+            // const newObject = left.intersect(right);
+            // console.log(left, right, newObject);
+            // if(newObject) {
+            editorRef.current.intersect(selections[0], selections[1]);
+            // }
           }
         }}>交集</button>
         <button onClick={() => {
           const selections = editorRef.current.getSelection();
           console.log(selections);
-          if(selections.length == 2) {
-            const left = selections[0].toPaperObject();
-            const right = selections[1].toPaperObject();
-            const newObject = left.unite(right);
-            editorRef.current.addPath(selections[0], selections[1], newObject.pathData);
+          if (selections.length == 2) {
+            // const left = selections[0].toPaperObject();
+            // const right = selections[1].toPaperObject();
+            // const newObject = left.unite(right);
+            editorRef.current.union(selections[0], selections[1]);
           }
-        }}>并集</button>
-        <button>差集</button>
-      
+        }}>联集</button>
+        <button onClick={() => {
+          const selections = editorRef.current.getSelection();
+          console.log(selections);
+          if (selections.length == 2) {
+            // const left = selections[0].toPaperObject();
+            // const right = selections[1].toPaperObject();
+            // const newObject = left.substract(right);
+            editorRef.current.exclude(selections[0], selections[1]);
+          }
+        }}>差集</button>
+        <button onClick={() => {
+          const selections = editorRef.current.getSelection();
+          console.log(selections);
+          if (selections.length == 2) {
+            // const left = selections[0].toPaperObject();
+            // const right = selections[1].toPaperObject();
+            // const newObject = left.substract(right);
+            editorRef.current.substract(selections[0], selections[1]);
+          }
+        }}>减去顶层</button>
+        <button onClick={() => {
+          editorRef.current.getSelection().forEach((item) => {
+            console.log(item.expand(10));
+          })
+        }}>扩大选中物体</button>
+        <button onClick={() => {
+          const { mask, json } = editorRef.current.getMask();
+          const file = createBmp(mask);
+          saveBMP(file, 'mask.bmp');
+        }}>
+          获取掩码
+        </button>
+        <button onClick={() => {
+          const circle = new Circle({
+            left: 0,
+            top: 0,
+            radius: 10,
+          });
+          editorRef.current.canvas.add(circle);
+          console.log(circle);
+          console.log(circle.containsPoint(new Point(0, 0)));
+          console.log(circle.containsPoint(new Point(10, 10)));
+          console.log(circle.containsPoint(new Point(10, 20)));
+          console.log(circle.containsPoint(new Point(20, 10)));
+
+          const rect = new Rect({
+            left: 0,
+            top: 0,
+            width: 100,
+            height: 100,
+          })
+          console.log(rect);
+          console.log(rect.containsPoint(new Point(0, 0)));
+          console.log(rect.containsPoint(new Point(99, 99)));
+          console.log(rect.containsPoint(new Point(100, 99)));
+          console.log(rect.containsPoint(new Point(100, 100)));
+          console.log(rect.containsPoint(new Point(101, 101)));
+          console.log(rect.containsPoint(new Point(102, 102)));
+          editorRef.current.canvas.add(rect);
+
+        }}>计算点</button>
+        <button onClick={() => {
+          editorRef.current.zoomOut();
+        }}>放大</button>
+        <button onClick={() => {
+          editorRef.current.zoomIn();
+        }}>缩小</button>
       </div>
-      
+
       <div className={"canvasDom"} ref={canvasDomRef}>
         <canvas ref={canvasRef} />
-        <canvas className={"hide_canvas"} id="noshowCanvas"></canvas>
+        {/* <canvas className={"hide_canvas"} id="noshowCanvas"></canvas> */}
       </div>
 
     </div>
