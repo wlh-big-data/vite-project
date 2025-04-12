@@ -7,4 +7,8 @@ export default class LabeledPolygon extends Polygon {
     this.fill = options.fill || STYLE.fillColor; // 填充颜色
     this.stroke = options.stroke || STYLE.strokeColor; // 边框颜色
   }
+
+  toJSON(left, top, scale) {
+    return null;
+  }
 }

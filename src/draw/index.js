@@ -176,7 +176,7 @@ export default class Editor extends EventBus {
   }
 
   invertSelection() {
-    const objects = this.canvas.getObjects().filter((item) => {
+    const objects = this.canvas.getActiveObjects().filter((item) => {
       return (item.type !== 'image');
     });
     const { img, scale } = this;
@@ -191,7 +191,6 @@ export default class Editor extends EventBus {
 
     if(objects.length === 0) {
       this.canvas.add(rect);
-      this.canvas.setActiveObject(rect);
     }else {
       console.log('object', objects);
       let result = objects[0].toPaperObject();
@@ -209,9 +208,10 @@ export default class Editor extends EventBus {
         this.canvas.add(new Path(path.pathData));
       }
      
-      this.canvas.requestRenderAll();
+      
     }
-    this.canvas.renderAll();
+    this.canvas.discardActiveObject();
+    this.canvas.requestRenderAll();
   }
 
   addPath(left, right, pathData) {
@@ -665,7 +665,7 @@ export default class Editor extends EventBus {
       return (item.type !== 'image');
     }).map((item) => {
       return item.toJSON(img.left, img.top, this.scale);
-    })
+    }).filter((item) => !!item);
   }
 
   startDrawingRect(options) {
