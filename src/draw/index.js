@@ -142,14 +142,12 @@ export default class Editor extends EventBus {
 
 
     this.canvas.on('selection:created', (options) => {
-      console.log('触发selected');
       this.selected = [];
       this.selected.push(...options.selected);
     });
 
 
     this.canvas.on('selection:updated', (options) => {
-      console.log('触发selected update');
       this.selected.push(...options.selected);
       options.deselected.forEach((item) => {
         if (this.selected.indexOf(item) > -1) {
@@ -158,7 +156,6 @@ export default class Editor extends EventBus {
       })
     });
     this.canvas.on('selection:cleared', (options) => {
-      console.log('触发selected cleared');
       this.selected = [];
     });
 
@@ -172,7 +169,6 @@ export default class Editor extends EventBus {
 
   setReadonly(flag = false) {
     this.readonly = flag;
-    console.log('this.readonly', this.readonly);
   }
 
   invertSelection() {
@@ -385,7 +381,6 @@ export default class Editor extends EventBus {
   }
 
   keydown(e) {
-    console.log('keydown', e.key);
     if (e.key === 'Escape') {
       this.cancelDrawingPoly();
     } else if (e.key === 'Delete' || e.key === 'Dead' || e.key === 'Backspace') {
@@ -603,10 +598,12 @@ export default class Editor extends EventBus {
       // 确保至少有三个点才能形成多边形
     if (polygonPoints.length >= 3) {
       // polygonPoints.push(polygonPoints[0]);
+      console.log('this.polygonPoints', this.polygonPoints);
       const polygonObject = new LabeledPolygon(polygonPoints, {
         objectCaching: false,
       });
       canvas.add(polygonObject);
+      console.log('polygonObject', polygonObject);
       canvas.setActiveObject(polygonObject);
     } 
     canvas.remove(polygon);
@@ -669,7 +666,6 @@ export default class Editor extends EventBus {
   }
 
   startDrawingRect(options) {
-    console.log('options', options, this);
     if(this.readonly) {
       return;
     }
@@ -841,54 +837,63 @@ export default class Editor extends EventBus {
     this.canvas.requestRenderAll();
   }
 
-  loadJSON(json = []) {
+  getObject(item) {
     const { img , scale } = this;
     const { left, top } = img;
+    if (item.type === CREATE_TYPE.CIRCLE) {
+      const circle = new Circle({
+        left: (item.left) * scale  + left,
+        top: (item.top) * scale  + top,
+        radius: item.radius * scale,
+        label: item.label,
+      });
+      return (circle);
+    }else if(item.type === CREATE_TYPE.RECT) {
+      const rect = new LabeledRect({
+        left: (item.left) * scale + left,
+        top: (item.top) * scale + top,
+        width: item.width * scale,
+        height: item.height * scale,
+        label: item.label,
+      });
+      return (rect);
+    } else if(item.type === CREATE_TYPE.POLYGON) {
+      const polygon = new LabeledPolygon(item.points.map((item) => {
+        return {
+          x: (item.x) * scale + left,
+          y: (item.y) * scale + top,
+        }
+      }), {
+        left: (item.left) * scale + left,
+        top: (item.top) * scale + top,
+        label: item.label,
+      });
+      return (polygon);
+    } else if(item.type === CREATE_TYPE.PATH) {
+      const path = new Path(item.pathData, {
+        // left: item.left,
+        // top: item.top,
+        label: item.label,
+      });
+      return (path);
+    } else if(item.type === CREATE_TYPE.ELLIPSE) {
+      const ellipse = new Ellipse({
+        left: (item.left ) * scale + left,
+        top: (item.top) * scale  + top,
+        rx: item.rx * scale,
+        ry: item.ry * scale,
+        label: item.label,
+      });
+      return (ellipse);
+    }
+  }
+
+  loadJSON(json = []) {
     json.forEach((item) => {
       console.log('item', item);
-      if (item.type === CREATE_TYPE.CIRCLE) {
-        const circle = new Circle({
-          left: (item.left) * scale  + left,
-          top: (item.top) * scale  + top,
-          radius: item.radius * scale,
-          label: item.label,
-        });
-        this.canvas.add(circle);
-      }else if(item.type === CREATE_TYPE.RECT) {
-        const rect = new LabeledRect({
-          left: (item.left) * scale + left,
-          top: (item.top) * scale + top,
-          width: item.width * scale,
-          height: item.height * scale,
-          label: item.label,
-        });
-        this.canvas.add(rect);
-      } else if(item.type === CREATE_TYPE.POLYGON) {
-        const polygon = new LabeledPolygon(item.points.map((item) => {
-          return {
-            x: (item.x) * scale + left,
-            y: (item.y) * scale + top,
-          }
-        }), {
-          label: item.label,
-        });
-        this.canvas.add(polygon);
-      } else if(item.type === CREATE_TYPE.PATH) {
-        const path = new Path(item.pathData, {
-          // left: item.left,
-          // top: item.top,
-          label: item.label,
-        });
-        this.canvas.add(path);
-      } else if(item.type === CREATE_TYPE.ELLIPSE) {
-        const ellipse = new Ellipse({
-          left: (item.left ) * scale + left,
-          top: (item.top) * scale  + top,
-          rx: item.rx * scale,
-          ry: item.ry * scale,
-          label: item.label,
-        });
-        this.canvas.add(ellipse);
+      const object = this.getObject(item);
+      if (object) {
+        this.canvas.add(object);
       }
     })
   }
@@ -923,8 +928,10 @@ export default class Editor extends EventBus {
 
   getMask() {
     const { canvas, img } = this;
+    const { left, top } = img;
     // const objects = canvas.getObjects().filter(obj => obj.type !== 'image');
     const objects = this.getJSONObject();
+    console.log('get mask object', objects);
     const mask = Array.from({ length: img.height }, () => new Uint8Array(img.width).fill(0));
     objects.forEach((item) => {
       if(item.type === CREATE_TYPE.CIRCLE) {
@@ -944,10 +951,16 @@ export default class Editor extends EventBus {
         });
         rect.getMask(mask);
       }else if(item.type === CREATE_TYPE.POLYGON) {
-        const polygon = new LabeledPolygon(item.points);
+        const polygon = new LabeledPolygon(item.points, {
+          left: item.left,
+          top: item.top,
+        });
         polygon.getMask(mask);
       }else if(item.type === CREATE_TYPE.PATH) {
-        const path = new Path(item.pathData);
+        const path = new Path(item.pathData, {
+          // left: item.left,
+          // top: item.top,
+        });
         path.getMask(mask);
       }else  if(item.type === CREATE_TYPE.ELLIPSE) {
         const ellipse = new Ellipse({

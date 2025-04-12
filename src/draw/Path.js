@@ -38,6 +38,8 @@ export default class LabeledPath extends Path {
       type: this.type,
       label: this.label,
       pathData: this.getTransformedPathData(left, top, scale),
+      left: this.left,
+      top: this.top,
     }
   }
 

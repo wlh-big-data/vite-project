@@ -25,6 +25,7 @@ export default class LabeledPolygon extends Polygon {
     this.on('modified', () => this.validatePosition(this));
   }
   validatePosition(polygon) {
+    console.log('points', polygon.points);
     const expected = polygon.getCenterPoint();
     const calculated = polygon._getTransformedPoints()
       .reduce((acc, p) => {
@@ -36,7 +37,8 @@ export default class LabeledPolygon extends Polygon {
     calculated.x /= polygon.points.length;
     calculated.y /= polygon.points.length;
   
-    console.log('位置校验:', {
+    const matrix = this.calcTransformMatrix();
+    console.log('位置校验:', this, expected, matrix, {
       center: expected,
       calcenter: calculated,
       diff: {
@@ -87,11 +89,15 @@ export default class LabeledPolygon extends Polygon {
     return paper;
   }
 
+  // 移动位置有问题
   // 修改方法定义（移除不必要参数）
   _getTransformedPoints(left = 0, top = 0, scale = 1) {
     // 获取组合变换矩阵（包含缩放、旋转、平移）
     const matrix = this.calcTransformMatrix();
     const center = this.getCenterPoint();
+    matrix[4] = this.left + this.width / 2;
+    matrix[5] = this.top + this.height / 2;
+    console.log(left, top, scale);
 
     return this.points.map((p, index) => {
       const adjustedPoint = new FabricPoint(
@@ -125,16 +131,20 @@ export default class LabeledPolygon extends Polygon {
   }
 
   toJSON(left, top, scale) {
-    const data = this._getTransformedPoints().map((item) => {
+    const josnObject = super.toJSON();
+    const data = josnObject.points.map((p) => {
       return {
-        x: item.x - (this.diff?.x || 0),
-        y: item.y - (this.diff?.y || 0),
+        x: Math.round((p.x - left)/scale),
+        y: Math.round((p.y - top)/scale)
       }
-    });
+    })
+    // const data = this._getTransformedPoints(left, top, scale);
     return {
       type: this.type,
       label: this.label,
       points: data,
+      left: Math.round((josnObject.left - left)/scale),
+      top: Math.round((josnObject.top - top)/scale),
     }
   }
 
@@ -160,17 +170,18 @@ export default class LabeledPolygon extends Polygon {
   getMask(mask) {
     const boundingRect = this.getBoundingRect();
     const { left, top, width, height } = boundingRect;
+    const paperPath = this.toPaperObject();
     
     const minLeft = Math.floor(left);
     const minTop = Math.floor(top);
     const maxLeft = Math.min(Math.round(left + width), mask[0].length);
-    const maxTop = Math.max(Math.round(top + height), mask.length);
-    
+    const maxTop = Math.min(Math.round(top + height), mask.length);
 
     for(let i = minLeft; i<= maxLeft; i++) {
       for(let j= minTop; j<= maxTop; j++) {
-        if(this._containsPoint({ x: i, y: j })) {
-          mask[j][i] = 1;
+        const paperPoint = new Point(i, j);
+        if(paperPath.contains(paperPoint)) {
+          mask[j]  && (mask[j][i] = 1);
         }
       }
     }
