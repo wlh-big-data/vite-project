@@ -73,12 +73,12 @@ export default class LabeledEllipse extends Ellipse {
     const { left, top, width, height } = boundingRect;
     const minLeft = Math.floor(left);
     const minTop = Math.floor(top);
-    const maxLeft = Math.round(left + width);
-    const maxTop = Math.round(top + height);
+    const maxLeft = Math.min(Math.round(left + width), mask[0].length - 1);
+    const maxTop = Math.min(Math.round(top + height), mask.length - 1);
     console.log('bounds', boundingRect);
     for(let i = minLeft; i<= maxLeft; i++) {
       for(let j= minTop; j<= maxTop; j++) {
-        if(this._containsPoint({ x: i, y: j }, center) ) {
+        if(this._containsPoint({ x: i, y: j }, center) && mask[j] ) {
           mask[j][i] = 1;
         }
       }

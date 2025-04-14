@@ -174,8 +174,8 @@ export default class LabeledPolygon extends Polygon {
     
     const minLeft = Math.floor(left);
     const minTop = Math.floor(top);
-    const maxLeft = Math.min(Math.round(left + width), mask[0].length);
-    const maxTop = Math.min(Math.round(top + height), mask.length);
+    const maxLeft = Math.min(Math.round(left + width), mask[0].length - 1);
+    const maxTop = Math.min(Math.round(top + height), mask.length - 1);
 
     for(let i = minLeft; i<= maxLeft; i++) {
       for(let j= minTop; j<= maxTop; j++) {

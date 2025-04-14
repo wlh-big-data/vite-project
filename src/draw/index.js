@@ -30,8 +30,8 @@ export default class Editor extends EventBus {
   }) {
     super();
     this.canvasDom = container;
-    this.readonly = true;
     this.selected = [];
+    this.createType = CREATE_TYPE.NONE;
 
     if (!container) {
       throw new Error('container is required');
@@ -160,6 +160,7 @@ export default class Editor extends EventBus {
     });
 
     this.drag();
+    this.currentIndex = 0;
 
   }
 
@@ -167,10 +168,16 @@ export default class Editor extends EventBus {
     return this.selected;
   }
 
-  setReadonly(flag = false) {
-    this.readonly = flag;
+  // setReadonly(flag = false) {
+  //   console.log('set readonly', flag);
+  //   this.readonly = flag;
+  // }
+
+  get readonly() {
+    return this.createType === CREATE_TYPE.NONE;
   }
 
+  // 反选
   invertSelection() {
     const objects = this.canvas.getActiveObjects().filter((item) => {
       return (item.type !== 'image');
@@ -197,7 +204,8 @@ export default class Editor extends EventBus {
         }
       });
       const rectPaper = rect.toPaperObject();
-      const path = rectPaper.exclude(result);
+      // this.excludePaper(rectPaper, result);
+      const path = rectPaper.subtract(result);
       this.canvas.remove(rect);
       this.canvas.remove(...objects);
       if (path.pathData) {
@@ -375,9 +383,6 @@ export default class Editor extends EventBus {
     this.createType = createType;
     this.isDrawing = false;
     this.currentShape = null;
-    if(createType !== CREATE_TYPE.NONE) {
-      this.setReadonly(false);
-    }
   }
 
   keydown(e) {
@@ -632,6 +637,7 @@ export default class Editor extends EventBus {
     // 监听鼠标滚轮事件
     const handleMouseWheel = (options) => {
       const { e } = options;
+      e.stopPropagation();
       const delta = Math.sign(e.deltaY);
       const currentZoom = canvas.getZoom();
       let newZoom;
@@ -744,6 +750,7 @@ export default class Editor extends EventBus {
     const { canvas } = this;
 
     canvas.on('mouse:down', (options) => {
+      console.log('this.readonly', this.readonly);
       if(!this.readonly) {
         return;
       }
@@ -786,6 +793,7 @@ export default class Editor extends EventBus {
     this.canvas.dispose();
   }
 
+  // 并集
   union(left, right) {
     // const group = new Group([left, right]);
     const leftPath = left.toPaperObject();
@@ -798,6 +806,7 @@ export default class Editor extends EventBus {
     this.canvas.requestRenderAll();
     
   }
+  // 交集
   intersect(left, right) {
     const leftPath = left.toPaperObject();
     const rightPath = right.toPaperObject();
@@ -811,6 +820,8 @@ export default class Editor extends EventBus {
     this.canvas.discardActiveObject();
     this.canvas.requestRenderAll();
   }
+
+  // 减去顶层
   substract(left, right) {
     const leftPath = left.toPaperObject();
     const rightPath = right.toPaperObject();
@@ -824,17 +835,27 @@ export default class Editor extends EventBus {
     this.canvas.requestRenderAll();
   }
 
-  exclude(left, right) {
-    const leftPath = left.toPaperObject();
-    const rightPath = right.toPaperObject();
-    const path = leftPath.exclude(rightPath);
-    this.canvas.remove(left);
-    this.canvas.remove(right);
+  excludePaper(leftPath, rightPath) {
+    const path = leftPath.subtract(rightPath);
+
     if(path.pathData) {
       this.canvas.add(new Path(path.pathData));
     }
+    const path2 = rightPath.subtract(leftPath);
+    if(path2.pathData) {
+      this.canvas.add(new Path(path2.pathData));
+    }
     this.canvas.discardActiveObject();
     this.canvas.requestRenderAll();
+  }
+
+  // 对称差集
+  exclude(left, right) {
+    const leftPath = left.toPaperObject();
+    const rightPath = right.toPaperObject();
+    this.excludePaper(leftPath, rightPath)
+    this.canvas.remove(left);
+    this.canvas.remove(right);
   }
 
   getObject(item) {
