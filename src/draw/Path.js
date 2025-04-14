@@ -34,12 +34,13 @@ export default class LabeledPath extends Path {
   }
 
   toJSON(left, top, scale) {
+    const paper = this.toPaperObject();
+    paper.transform(new Matrix(scale, 0, 0, scale, left, top));
+    
     return {
       type: this.type,
       label: this.label,
-      pathData: this.getTransformedPathData(left, top, scale),
-      left: this.left,
-      top: this.top,
+      pathData: paper.pathData,
     }
   }
 

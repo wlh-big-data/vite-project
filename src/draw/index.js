@@ -871,8 +871,8 @@ export default class Editor extends EventBus {
       return (polygon);
     } else if(item.type === CREATE_TYPE.PATH) {
       const path = new Path(item.pathData, {
-        // left: item.left,
-        // top: item.top,
+        left: item.left,
+        top: item.top,
         label: item.label,
       });
       return (path);
