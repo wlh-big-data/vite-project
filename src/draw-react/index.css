@@ -12,7 +12,7 @@
 .canvasDom {
     /* flex: 1; */
     width: 600px;
-    height: 600px;
+    height: 800px;
 }
 
 canvas {

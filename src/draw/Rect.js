@@ -88,32 +88,13 @@ export default class LabeledRect extends Rect {
     this.canvas.requestRenderAll();
   }
 
-  // set(key, value) {
-  //   super.set(key, value);
-  //   if (typeof key === 'object') {
-  //     if ('width' in key || 'height' in key) {
-  //       this.labelText.set({
-  //         left: this.width / 2,
-  //         top: this.height / 2,
-  //       });
-  //     }
-  //   } else {
-  //     if (key === 'width' || key === 'height') {
-  //       this.labelText.set({
-  //         left: this.width / 2,
-  //         top: this.height / 2,
-  //       });
-  //     }
-  //   }
-  // }
-
-  toJSON(left, top, scale) {
+  toJSON() {
     return {
         type: this.type,
-        width: Math.round(this.width * this.scaleX / scale),
-        height: Math.round(this.height * this.scaleY / scale),
-        left: Math.round((this.left - left)/scale),
-        top: Math.round((this.top - top)/scale),
+        width: Math.round(this.width * this.scaleX),
+        height: Math.round(this.height * this.scaleY ),
+        left: Math.round((this.left)),
+        top: Math.round((this.top)),
         label: this.label,
         isCreating: this.isCreating,
     }

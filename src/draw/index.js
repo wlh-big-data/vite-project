@@ -224,7 +224,9 @@ export default class Editor extends EventBus {
     this.canvas.remove(left);
     this.canvas.remove(right);
 
-    const path = new Path(pathData, {});
+    const path = new Path(pathData, {
+      label: '范围' + (this.currentIndex++)
+    });
     this.canvas.add(path);
     this.canvas.renderAll();
   }
@@ -673,7 +675,7 @@ export default class Editor extends EventBus {
     return objects.filter((item) => {
       return (item.type !== 'image');
     }).map((item) => {
-      return item.toJSON(img.left, img.top, this.scale);
+      return item.toJSON();
     }).filter((item) => !!item);
   }
 
@@ -745,7 +747,7 @@ export default class Editor extends EventBus {
     console.log('resize', this.canvas, this.canvasDom.clientWidth, this.canvasDom.clientHeight);
     const scale = Math.round(Math.min(canvas.width / img.width, canvas.height / img.height) * 100) / 100;
     console.log(canvas.width, canvas.height, img.width, img.height, scale);
-    this.scale = scale;
+    // this.scale = scale;
 
   }
 
@@ -763,9 +765,9 @@ export default class Editor extends EventBus {
       if(options.target && options.target.type === 'image') {
         console.log('options.e', options.e);
         //  if (options.e.button === 1) { // 中键拖动
-        console.log('options.e', options, this.img);
-        console.log('options', (options.scenePoint.x - this.img.left) / this.scale,
-          (options.scenePoint.y - this.img.top) / this.scale);
+        // console.log('options.e', options, this.img);
+        // console.log('options', (options.scenePoint.x - this.img.left) / this.scale,
+        //   (options.scenePoint.y - this.img.top) / this.scale);
         isDragging = true;
         lastPointerPosition = canvas.getPointer(options.e);
       }
@@ -960,6 +962,7 @@ export default class Editor extends EventBus {
         top: 0,
         selectable: false,
       });
+      canvas.setViewportTransform([1, 0, 0, 1, (canvas.width - width) / 2, (canvas.height - height) / 2]);
       canvas.setZoom(scale);
       this.img = img;
 

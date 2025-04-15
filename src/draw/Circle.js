@@ -27,23 +27,18 @@ export default class LabeledCircle extends Circle {
     return paper; 
   }
 
-  toJSON(left, top, scale) {
-    const radius = Math.round(this.radius * Math.max(this.scaleX, this.scaleY) / scale);
+  toJSON() {
+    const radius = Math.round(this.radius * Math.max(this.scaleX, this.scaleY));
     return {
         type: this.type,
         radius,
-        left: Math.round((this.left - left)/scale),
-        top: Math.round((this.top - top)/scale),
+        left: Math.round((this.left)),
+        top: Math.round((this.top)),
         label: this.label
     }
   }
 
   _containsPoint(point, center) {
-    // const flag = super.containsPoint(point);
-    // if(!flag) {
-    //   return false;
-    // }
-    
     const dx = point.x - center.x;
     const dy = point.y - center.y;
     return dx * dx + dy * dy <= this.radius * this.radius;

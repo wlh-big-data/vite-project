@@ -48,14 +48,14 @@ export default class LabeledEllipse extends Ellipse {
     this.canvas.requestRenderAll();
   }
 
-  toJSON(left, top, scale) {
+  toJSON() {
     console.log('ellipse', this);
     return {
       type: this.type,
-      rx: Math.round(this.rx * (this.scaleX) / scale),
-      ry: Math.round(this.ry * (this.scaleY) / scale),
-      left: Math.round((this.left - left) / scale),
-      top: Math.round((this.top - top) / scale),
+      rx: Math.round(this.rx * (this.scaleX)),
+      ry: Math.round(this.ry * (this.scaleY)),
+      left: Math.round((this.left)),
+      top: Math.round((this.top)),
       label: this.label
     };
   }

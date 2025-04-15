@@ -22,35 +22,35 @@ export default class LabeledPolygon extends Polygon {
     // this.on('modified', () => {
     //   console.log('Polygon modified, new points:', this.getTransformedPoints());
     // });
-    this.on('modified', () => this.validatePosition(this));
+    // this.on('modified', () => this.validatePosition(this));
   }
-  validatePosition(polygon) {
-    console.log('points', polygon.points);
-    const expected = polygon.getCenterPoint();
-    const calculated = polygon._getTransformedPoints()
-      .reduce((acc, p) => {
-        acc.x += p.x;
-        acc.y += p.y;
-        return acc;
-      }, {x:0, y:0});
+  // validatePosition(polygon) {
+  //   console.log('points', polygon.points);
+  //   const expected = polygon.getCenterPoint();
+  //   const calculated = polygon._getTransformedPoints()
+  //     .reduce((acc, p) => {
+  //       acc.x += p.x;
+  //       acc.y += p.y;
+  //       return acc;
+  //     }, {x:0, y:0});
     
-    calculated.x /= polygon.points.length;
-    calculated.y /= polygon.points.length;
+  //   calculated.x /= polygon.points.length;
+  //   calculated.y /= polygon.points.length;
   
-    const matrix = this.calcTransformMatrix();
-    console.log('位置校验:', this, expected, matrix, {
-      center: expected,
-      calcenter: calculated,
-      diff: {
-        x: calculated.x - expected.x,
-        y: calculated.y - expected.y
-      }
-    });
-    this.diff = {
-      x: calculated.x - expected.x,
-      y: calculated.y - expected.y
-    }
-  }
+  //   const matrix = this.calcTransformMatrix();
+  //   console.log('位置校验:', this, expected, matrix, {
+  //     center: expected,
+  //     calcenter: calculated,
+  //     diff: {
+  //       x: calculated.x - expected.x,
+  //       y: calculated.y - expected.y
+  //     }
+  //   });
+  //   this.diff = {
+  //     x: calculated.x - expected.x,
+  //     y: calculated.y - expected.y
+  //   }
+  // }
   _render(ctx) {
     super._render(ctx);
     if(this.isCreating) {
@@ -91,36 +91,36 @@ export default class LabeledPolygon extends Polygon {
 
   // 移动位置有问题
   // 修改方法定义（移除不必要参数）
-  _getTransformedPoints(left = 0, top = 0, scale = 1) {
-    // 获取组合变换矩阵（包含缩放、旋转、平移）
-    const matrix = this.calcTransformMatrix();
-    const center = this.getCenterPoint();
-    matrix[4] = this.left + this.width / 2;
-    matrix[5] = this.top + this.height / 2;
-    console.log(left, top, scale);
+  // _getTransformedPoints(left = 0, top = 0, scale = 1) {
+  //   // 获取组合变换矩阵（包含缩放、旋转、平移）
+  //   const matrix = this.calcTransformMatrix();
+  //   const center = this.getCenterPoint();
+  //   matrix[4] = this.left + this.width / 2;
+  //   matrix[5] = this.top + this.height / 2;
+  //   console.log(left, top, scale);
 
-    return this.points.map((p, index) => {
-      const adjustedPoint = new FabricPoint(
-        p.x - center.x,
-        p.y - center.y
-      );
-      const transformed = util.transformPoint(
-        adjustedPoint,
-        matrix
-      );
+  //   return this.points.map((p, index) => {
+  //     const adjustedPoint = new FabricPoint(
+  //       p.x - center.x,
+  //       p.y - center.y
+  //     );
+  //     const transformed = util.transformPoint(
+  //       adjustedPoint,
+  //       matrix
+  //     );
 
-      const point = { 
-        x: (transformed.x),
-        y: (transformed.y)
-      };
-      return point;
-    }).map((p) => {
-      return {
-        x: Math.round((p.x - left)/scale),
-        y: Math.round((p.y - top)/scale)
-      }
-    });
-  }
+  //     const point = { 
+  //       x: (transformed.x),
+  //       y: (transformed.y)
+  //     };
+  //     return point;
+  //   }).map((p) => {
+  //     return {
+  //       x: Math.round((p.x - left)/scale),
+  //       y: Math.round((p.y - top)/scale)
+  //     }
+  //   });
+  // }
 
   expand(expand) {
     this.left = this.left - expand;
@@ -130,21 +130,15 @@ export default class LabeledPolygon extends Polygon {
     this.canvas.requestRenderAll();
   }
 
-  toJSON(left, top, scale) {
-    const josnObject = super.toJSON();
-    const data = josnObject.points.map((p) => {
-      return {
-        x: Math.round((p.x - left)/scale),
-        y: Math.round((p.y - top)/scale)
-      }
-    })
-    // const data = this._getTransformedPoints(left, top, scale);
+  toJSON() {
+    // const josnObject = super.toJSON();
+    // const data = josnObject.points;
     return {
       type: this.type,
       label: this.label,
-      points: data,
-      left: Math.round((josnObject.left - left)/scale),
-      top: Math.round((josnObject.top - top)/scale),
+      points: this.points,
+      left: this.left,
+      top: this.top,
     }
   }
 
