@@ -252,12 +252,10 @@ export default class Editor extends EventBus {
   }
 
   addPolygon(points) {
-    const { img, scale } = this;
-    const { left, top } = img;
     const polygon = new LabeledPolygon(points.map((item) => {
       return {
-        x: (item.x) * scale + left,
-        y: (item.y) * scale + top,
+        x: (item.x),
+        y: (item.y),
       }
     }), {
       objectCaching: false,
@@ -889,34 +887,32 @@ export default class Editor extends EventBus {
   }
 
   getObject(item) {
-    const { img , scale } = this;
-    const { left, top } = img;
     if (item.type === CREATE_TYPE.CIRCLE) {
       const circle = new Circle({
-        left: (item.left) * scale  + left,
-        top: (item.top) * scale  + top,
-        radius: item.radius * scale,
+        left: (item.left),
+        top: (item.top),
+        radius: item.radius,
         label: item.label,
       });
       return (circle);
     }else if(item.type === CREATE_TYPE.RECT) {
       const rect = new LabeledRect({
-        left: (item.left) * scale + left,
-        top: (item.top) * scale + top,
-        width: item.width * scale,
-        height: item.height * scale,
+        left: (item.left) ,
+        top: (item.top),
+        width: item.width,
+        height: item.height,
         label: item.label,
       });
       return (rect);
     } else if(item.type === CREATE_TYPE.POLYGON) {
       const polygon = new LabeledPolygon(item.points.map((item) => {
         return {
-          x: (item.x) * scale + left,
-          y: (item.y) * scale + top,
+          x: (item.x),
+          y: (item.y),
         }
       }), {
-        left: (item.left) * scale + left,
-        top: (item.top) * scale + top,
+        left: (item.left) ,
+        top: (item.top),
         label: item.label,
       });
       return (polygon);
@@ -929,10 +925,10 @@ export default class Editor extends EventBus {
       return (path);
     } else if(item.type === CREATE_TYPE.ELLIPSE) {
       const ellipse = new Ellipse({
-        left: (item.left ) * scale + left,
-        top: (item.top) * scale  + top,
-        rx: item.rx * scale,
-        ry: item.ry * scale,
+        left: (item.left ) ,
+        top: (item.top) ,
+        rx: item.rx,
+        ry: item.ry ,
         label: item.label,
       });
       return (ellipse);
@@ -956,13 +952,10 @@ export default class Editor extends EventBus {
       const { canvas } = this;
       const scale = Math.round(Math.min(canvas.width / img.width, canvas.height / img.height) * 100) / 100;
       // console.log(canvas.width, canvas.height, img.width, img.height, scale);
-      this.scale = 1;
       // 实际宽度
-      const width = Math.round(img.width * scale);
+      const width = img.width;
       // 实际高度
-      const height = Math.round(img.height * scale);
-
-      console.log('width height', width, height);
+      const height = img.height;
       img.set({
         // left: (canvas.width - width) / 2,
         // top: (canvas.height - height) / 2,
