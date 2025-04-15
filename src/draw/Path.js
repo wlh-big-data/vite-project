@@ -35,11 +35,12 @@ export default class LabeledPath extends Path {
   }
 
   toJSON() {
+    const paper = this.toPaperObject();
     
     return {
       type: this.type,
       label: this.label,
-      pathData: this.pathData,
+      pathData: paper.pathData,
       // left: this.left,
       // top: this.top,
     }

@@ -780,12 +780,22 @@ export default class Editor extends EventBus {
         const deltaX = pointer.x - lastPointerPosition.x;
         const deltaY = pointer.y - lastPointerPosition.y;
 
-        canvas.forEachObject((obj) => {
-          obj.set({
-            left: obj.left + deltaX,
-            top: obj.top + deltaY
-          });
-        });
+        const currentTransform = canvas.viewportTransform;
+        console.log('currentTransform', currentTransform)
+
+        // 计算新的平移量（第四、五个元素是平移）
+        const newTransform = [
+          currentTransform[0], 
+          currentTransform[1],
+          currentTransform[2],
+          currentTransform[3],
+          currentTransform[4] + deltaX * currentTransform[0], // X增量
+          currentTransform[5] + deltaY * currentTransform[3]  // Y增量
+        ];
+
+        canvas.setViewportTransform(newTransform);
+
+        // this.canvas.setViewportTransform([1, 0, 0, 1, deltaX, deltaY])
 
         canvas.renderAll();
         lastPointerPosition = pointer;
