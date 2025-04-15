@@ -23,6 +23,7 @@ export default class LabeledPath extends Path {
     paper.position = new Point(0, 0);
 
     const matrix = this.calcTransformMatrix();
+    console.log('matrix', matrix);
     const paperMatrix = new Matrix(
       matrix[0], matrix[1],
       matrix[2], matrix[3],
@@ -35,12 +36,16 @@ export default class LabeledPath extends Path {
 
   toJSON(left, top, scale) {
     const paper = this.toPaperObject();
-    paper.transform(new Matrix(scale, 0, 0, scale, left, top));
+    console.log('path to object', scale, left, top);
+    // const newObject = new Path(paper.pathData);
+    // this.canvas.add(newObject)
     
     return {
       type: this.type,
       label: this.label,
       pathData: paper.pathData,
+      // left: this.left,
+      // top: this.top,
     }
   }
 
@@ -125,8 +130,11 @@ export default class LabeledPath extends Path {
     return transformedCommands.join(' ');
   }
   
-  getMask(mask) {
+  getMask(mask, { imgLeft = 0, imgTop = 0, imgScale = 1}) {
     const paperPath = this.toPaperObject();
+    // const matrix = this.calcTransformMatrix();
+    // console.log('matrx', matrix);
+    // paperPath.transform(new Matrix(1/imgScale, 0, 0, 1/imgScale, 0, 0));
     const boundingRect = this.getBoundingRect();
     const { left, top, width, height } = boundingRect;
     const minLeft = Math.floor(left);

@@ -160,7 +160,7 @@ export default class Editor extends EventBus {
     });
 
     this.drag();
-    this.currentIndex = 0;
+    this.currentIndex = 1;
 
   }
 
@@ -209,7 +209,9 @@ export default class Editor extends EventBus {
       this.canvas.remove(rect);
       this.canvas.remove(...objects);
       if (path.pathData) {
-        this.canvas.add(new Path(path.pathData));
+        this.canvas.add(new Path(path.pathData, {
+          label: '范围' + (this.currentIndex++)
+        }));
       }
      
       
@@ -257,6 +259,7 @@ export default class Editor extends EventBus {
       }
     }), {
       objectCaching: false,
+      label: '范围' + (this.currentIndex++)
     });
     this.canvas.add(polygon);
     this.canvas.renderAll();
@@ -425,6 +428,7 @@ export default class Editor extends EventBus {
       left: scenePoint.x,
       top: scenePoint.y,
       radius: 0,
+      label: '范围' + (this.currentIndex++)
     });
     this.canvas.add(this.currentShape);
   }
@@ -512,6 +516,7 @@ export default class Editor extends EventBus {
       top: scenePoint.y,
       rx: 0,
       ry: 0,
+      label: '范围' + (this.currentIndex++)
     });
     this.canvas.add(this.currentShape);
   }
@@ -606,6 +611,7 @@ export default class Editor extends EventBus {
       console.log('this.polygonPoints', this.polygonPoints);
       const polygonObject = new LabeledPolygon(polygonPoints, {
         objectCaching: false,
+        label: '范围' + (this.currentIndex++)
       });
       canvas.add(polygonObject);
       console.log('polygonObject', polygonObject);
@@ -694,7 +700,7 @@ export default class Editor extends EventBus {
       top: this.startPoint.y,
       width: 0,
       height: 0,
-      strokeWidth: 1,
+      label: '范围' + (this.currentIndex++)
     });
     this.canvas.add(this.currentShape);
   }
@@ -799,7 +805,9 @@ export default class Editor extends EventBus {
     const leftPath = left.toPaperObject();
     const rightPath = right.toPaperObject();
     const path = leftPath.unite(rightPath);
-    this.canvas.add(new Path(path.pathData));
+    this.canvas.add(new Path(path.pathData, {
+      label: '范围' + (this.currentIndex++)
+    }));
     this.canvas.remove(left);
     this.canvas.remove(right);
     this.canvas.discardActiveObject();
@@ -815,7 +823,9 @@ export default class Editor extends EventBus {
     this.canvas.remove(left);
     this.canvas.remove(right);
     if (path.pathData) {
-      this.canvas.add(new Path(path.pathData));
+      this.canvas.add(new Path(path.pathData, {
+        label: '范围' + (this.currentIndex++)
+      }));
     }
     this.canvas.discardActiveObject();
     this.canvas.requestRenderAll();
@@ -829,7 +839,9 @@ export default class Editor extends EventBus {
     this.canvas.remove(left);
     this.canvas.remove(right);
     if(path.pathData) {
-      this.canvas.add(new Path(path.pathData));
+      this.canvas.add(new Path(path.pathData, {
+        label: '范围' + (this.currentIndex++)
+      }));
     }
     this.canvas.discardActiveObject();
     this.canvas.requestRenderAll();
@@ -839,11 +851,17 @@ export default class Editor extends EventBus {
     const path = leftPath.subtract(rightPath);
 
     if(path.pathData) {
-      this.canvas.add(new Path(path.pathData));
+      this.canvas.add(new Path(path.pathData, {
+        label: '范围' + (this.currentIndex++)
+      }));
     }
     const path2 = rightPath.subtract(leftPath);
     if(path2.pathData) {
-      this.canvas.add(new Path(path2.pathData));
+      this.canvas.add(new Path(path2.pathData, 
+        {
+          label: '范围' + (this.currentIndex++)
+        }
+      ));
     }
     this.canvas.discardActiveObject();
     this.canvas.requestRenderAll();
@@ -926,7 +944,7 @@ export default class Editor extends EventBus {
       const { canvas } = this;
       const scale = Math.round(Math.min(canvas.width / img.width, canvas.height / img.height) * 100) / 100;
       // console.log(canvas.width, canvas.height, img.width, img.height, scale);
-      this.scale = scale;
+      this.scale = 1;
       // 实际宽度
       const width = Math.round(img.width * scale);
       // 实际高度
@@ -934,12 +952,15 @@ export default class Editor extends EventBus {
 
       console.log('width height', width, height);
       img.set({
-        left: (canvas.width - width) / 2,
-        top: (canvas.height - height) / 2,
-        scaleX: scale,
-        scaleY: scale,
+        // left: (canvas.width - width) / 2,
+        // top: (canvas.height - height) / 2,
+        // scaleX: scale,
+        // scaleY: scale,
+        left: 0,
+        top: 0,
         selectable: false,
       });
+      canvas.setZoom(scale);
       this.img = img;
 
       canvas.insertAt(0, img);
@@ -950,6 +971,7 @@ export default class Editor extends EventBus {
   getMask() {
     const { canvas, img } = this;
     const { left, top } = img;
+    const { scale } = this;
     // const objects = canvas.getObjects().filter(obj => obj.type !== 'image');
     const objects = this.getJSONObject();
     console.log('get mask object', objects);
@@ -982,7 +1004,8 @@ export default class Editor extends EventBus {
           // left: item.left,
           // top: item.top,
         });
-        path.getMask(mask);
+        this.canvas.add(path);
+        path.getMask(mask, { imgLeft: left, imgTop: top, imgScale: scale});
       }else  if(item.type === CREATE_TYPE.ELLIPSE) {
         const ellipse = new Ellipse({
           left: item.left,

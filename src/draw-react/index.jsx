@@ -9,13 +9,14 @@ import './index.css';
 export default function Draw(props) {
   const canvasRef = useRef(null);
   const canvasDomRef = useRef(null);
-  const [edit, setEdit] = useState(true);
+  const [edit, setEdit] = useState(EditorType.RECT);
   const editorRef = useRef();
   useEffect(() => {
     const editor = new Editor({
       container: canvasDomRef.current,
       imgUrl: '/grid.png',
     })
+    editor.setCreateType(EditorType.RECT)
     editor.on('load', () => {
       console.log('editor load', editor);
     })
@@ -46,26 +47,25 @@ export default function Draw(props) {
     <div className={"container"}>
       <div className={"opers"}>
         <button onClick={() => {
-          setEdit(!edit);
-          editorRef.current.setReadonly(!edit);
-        }}>{edit ? '编辑' : '查看'}</button>
+          const type = edit === EditorType.NONE ? EditorType.RECT : EditorType.NONE;
+          setEdit(type);
+          editorRef.current.setCreateType(type);
+        }}>{edit !== EditorType.NONE ? '编辑' : '查看'}</button>
         <button>保存</button>
         <button onClick={() => {
-          console.log('juxing');
-          setEdit(true);
-          editorRef.current.setReadonly(false);
+          setEdit(EditorType.RECT);
           editorRef.current.setCreateType(EditorType.RECT);
         }}>矩形</button>
         <button onClick={() => {
-          editorRef.current.setReadonly(false);
+          setEdit(EditorType.ELLIPSE);
           editorRef.current.setCreateType(EditorType.ELLIPSE);
         }}>椭圆</button>
         <button onClick={() => {
-          editorRef.current.setReadonly(false);
+          setEdit(EditorType.CIRCLE);
           editorRef.current.setCreateType(EditorType.CIRCLE);
         }}>圆</button>
         <button onClick={() => {
-          editorRef.current.setReadonly(false);
+          setEdit(EditorType.POLYGON);
           editorRef.current.setCreateType(EditorType.POLYGON);
         }}>多边形</button>
         <button onClick={() => {
@@ -106,7 +106,7 @@ export default function Draw(props) {
           //   {"type":"rect","width":51,"height":50,"left":49,"top":50,"label":"rect"},
           //   {"type":"circle","radius":26,"left":148,"top":99,"label":"circle"},
           //   {"type":"ellipse","rx":24,"ry":48,"left":201,"top":153,"label":"ellipse"}]);
-          editorRef.current.loadJSON([{"type":"rect","width":81,"height":63,"left":-86,"top":-38,"label":"rect"},{"type":"rect","width":108,"height":92,"left":-25,"top":-46,"label":"rect"},{"type":"path","label":"path","pathData":"M 618.58 195.90 L 618.58 175.14 L 557.38 175.14 L 557.38 112.30 L 618.58 112.30 L 618.58 103.55 L 726.78 103.55 L 726.78 195.90 Z"}]);
+          editorRef.current.loadJSON( [{"type":"path","label":"范围3","pathData":"M519.5,247.5h130v140h-80v150h-201v-208h151z","left":368,"top":247}]);
         }}>加载JSON</button>
         <button onClick={() => {
           const objects = editorRef.current.getJSONObject();
