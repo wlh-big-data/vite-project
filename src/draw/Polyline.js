@@ -6,6 +6,7 @@ export default class LabeledPolygon extends Polygon {
     super(points, options);
     this.fill = options.fill || STYLE.fillColor; // 填充颜色
     this.stroke = options.stroke || STYLE.strokeColor; // 边框颜色
+    this.strokeWidth = options.strokeWidth || STYLE.strokeWidth;
   }
 
   toJSON(left, top, scale) {

@@ -144,6 +144,7 @@ export default class Editor extends EventBus {
     this.canvas.on('selection:created', (options) => {
       this.selected = [];
       this.selected.push(...options.selected);
+      console.log('selection:created');
     });
 
 
@@ -154,9 +155,11 @@ export default class Editor extends EventBus {
           this.selected.splice(this.selected.indexOf(item), 1);
         }
       })
+      console.log('selection:updated');
     });
     this.canvas.on('selection:cleared', (options) => {
       this.selected = [];
+      console.log('selection:updated');
     });
 
     this.drag();
@@ -557,9 +560,6 @@ export default class Editor extends EventBus {
     if(this.readonly) {
       return;
     }
-    if(options.target && options.target.type !== 'image') {
-      return;
-    }
     if (!(this.createType === CREATE_TYPE.POLYGON && this.checkImgBounds(options))) {
       return;
     }
@@ -580,8 +580,8 @@ export default class Editor extends EventBus {
       canvas.remove(this.polygon);
     }
     this.polygon = new Polyline(this.polygonPoints, {
-      strokeWidth: 1,
       objectCaching: false,
+      selectable: false,
 
     });
     canvas.add(this.polygon);
@@ -965,7 +965,9 @@ export default class Editor extends EventBus {
         top: 0,
         selectable: false,
       });
-      canvas.setViewportTransform([1, 0, 0, 1, (canvas.width - width) / 2, (canvas.height - height) / 2]);
+      // canvas.setViewportTransform([1, 0, 0, 1, (canvas.width - width) / 2, (canvas.height - height) / 2]);
+      // const center = canvas.getCenterPoint();
+      // canvas.zoomToPoint(center, this.zoom)
       canvas.setZoom(scale);
       this.img = img;
 
@@ -1010,7 +1012,6 @@ export default class Editor extends EventBus {
           // left: item.left,
           // top: item.top,
         });
-        this.canvas.add(path);
         path.getMask(mask, { imgLeft: left, imgTop: top, imgScale: scale});
       }else  if(item.type === CREATE_TYPE.ELLIPSE) {
         const ellipse = new Ellipse({
