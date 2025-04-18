@@ -7,6 +7,7 @@ import Polyline from './Polyline';
 import Path from './Path';
 import Ellipse from "./Ellipse";
 import Circle from "./Circle";
+import MyImage from "./Image";
 import { EVENTS } from "./constants";
 
 FabricObject.prototype.setControlVisible('mtr', false);
@@ -183,7 +184,7 @@ export default class Editor extends EventBus {
   // 反选
   invertSelection() {
     const objects = this.canvas.getActiveObjects().filter((item) => {
-      return (item.type !== 'image');
+      return !(item.isBackground);
     });
     const { img, scale } = this;
     const { left, top, width, height } = img;
@@ -206,16 +207,16 @@ export default class Editor extends EventBus {
           result = result.unite(item.toPaperObject());
         }
       });
-      const rectPaper = rect.toPaperObject();
+      // const rectPaper = rect.toPaperObject();
       // this.excludePaper(rectPaper, result);
-      const path = rectPaper.subtract(result);
+      // const path = rectPaper.subtract(result);
       this.canvas.remove(rect);
       this.canvas.remove(...objects);
-      if (path.pathData) {
-        this.canvas.add(new Path(path.pathData, {
-          label: '范围' + (this.currentIndex++)
-        }));
-      }
+      // if (path.pathData) {
+      //   this.canvas.add(new Path(path.pathData, {
+      //     // label: '范围' + (this.currentIndex++)
+      //   }));
+      // }
      
       
     }
@@ -228,7 +229,7 @@ export default class Editor extends EventBus {
     this.canvas.remove(right);
 
     const path = new Path(pathData, {
-      label: '范围' + (this.currentIndex++)
+      // label: '范围' + (this.currentIndex++)
     });
     this.canvas.add(path);
     this.canvas.renderAll();
@@ -237,7 +238,8 @@ export default class Editor extends EventBus {
   removeObjects() {
     const objects = this.canvas.getObjects();
     objects.filter((item) => {
-      return (item.type !== 'image');
+      // return (item.type !== 'image');
+      return !(item.isBackground);
     }).forEach((item) => {
       this.canvas.remove(item);
     })
@@ -262,7 +264,7 @@ export default class Editor extends EventBus {
       }
     }), {
       objectCaching: false,
-      label: '范围' + (this.currentIndex++)
+      // label: '范围' + (this.currentIndex++)
     });
     this.canvas.add(polygon);
     this.canvas.renderAll();
@@ -388,6 +390,11 @@ export default class Editor extends EventBus {
     console.log('createType', createType);
     this.createType = createType;
     this.isDrawing = false;
+    if(this.polygon) {
+      this.canvas.remove(this.polygon);
+      this.canvas.requestRenderAll();
+    }
+    
     this.currentShape = null;
   }
 
@@ -431,7 +438,7 @@ export default class Editor extends EventBus {
       left: scenePoint.x,
       top: scenePoint.y,
       radius: 0,
-      label: '范围' + (this.currentIndex++)
+      // label: '范围' + (this.currentIndex++)
     });
     this.canvas.add(this.currentShape);
   }
@@ -439,24 +446,24 @@ export default class Editor extends EventBus {
 
   caclRectBounds(options) {
     const { scenePoint } = options;
-    const imgBounds = this.getImageBounds();
+    // const imgBounds = this.getImageBounds();
     const { startPoint } = this;
     let left = Math.min(startPoint.x, scenePoint.x);
     let top = Math.min(startPoint.y, scenePoint.y);
     let right = Math.max(startPoint.x, scenePoint.x);
     let bottom = Math.max(startPoint.y, scenePoint.y);
-    if(left < imgBounds.left) {
-      left = imgBounds.left;
-    }
-    if(top < imgBounds.top) {
-      top = imgBounds.top;
-    }
-    if(right > imgBounds.right) {
-      right = imgBounds.right;
-    }
-    if(bottom > imgBounds.bottom) {
-      bottom = imgBounds.bottom;
-    }
+    // if(left < imgBounds.left) {
+    //   left = imgBounds.left;
+    // }
+    // if(top < imgBounds.top) {
+    //   top = imgBounds.top;
+    // }
+    // if(right > imgBounds.right) {
+    //   right = imgBounds.right;
+    // }
+    // if(bottom > imgBounds.bottom) {
+    //   bottom = imgBounds.bottom;
+    // }
     return {
       left, top, right, bottom
     }
@@ -490,13 +497,13 @@ export default class Editor extends EventBus {
     }
   }
 
-  checkImgBounds(options) {
-    const imgBounds = this.getImageBounds();
-    if (!imgBounds) return false;
-    const { scenePoint } = options;
-    if (scenePoint.x < imgBounds.left || scenePoint.x > imgBounds.right || scenePoint.y < imgBounds.top || scenePoint.y > imgBounds.bottom) {
-      return false;
-    }
+  checkImgBounds() {
+    // const imgBounds = this.getImageBounds();
+    // if (!imgBounds) return false;
+    // const { scenePoint } = options;
+    // if (scenePoint.x < imgBounds.left || scenePoint.x > imgBounds.right || scenePoint.y < imgBounds.top || scenePoint.y > imgBounds.bottom) {
+    //   return false;
+    // }
     return true;
   }
 
@@ -519,7 +526,7 @@ export default class Editor extends EventBus {
       top: scenePoint.y,
       rx: 0,
       ry: 0,
-      label: '范围' + (this.currentIndex++)
+      // label: '范围' + (this.currentIndex++)
     });
     this.canvas.add(this.currentShape);
   }
@@ -611,7 +618,7 @@ export default class Editor extends EventBus {
       console.log('this.polygonPoints', this.polygonPoints);
       const polygonObject = new LabeledPolygon(polygonPoints, {
         objectCaching: false,
-        label: '范围' + (this.currentIndex++)
+        // label: '范围' + (this.currentIndex++)
       });
       canvas.add(polygonObject);
       console.log('polygonObject', polygonObject);
@@ -671,7 +678,8 @@ export default class Editor extends EventBus {
     const objects = this.canvas.getObjects();
     const { img } = this;
     return objects.filter((item) => {
-      return (item.type !== 'image');
+      console.log('img', item);
+      return !item.isBackground;
     }).map((item) => {
       return item.toJSON();
     }).filter((item) => !!item);
@@ -700,7 +708,7 @@ export default class Editor extends EventBus {
       top: this.startPoint.y,
       width: 0,
       height: 0,
-      label: '范围' + (this.currentIndex++)
+      // label: '范围' + (this.currentIndex++)
     });
     this.canvas.add(this.currentShape);
   }
@@ -809,52 +817,116 @@ export default class Editor extends EventBus {
     this.canvas.dispose();
   }
 
-  // 并集
-  union(left, right) {
-    // const group = new Group([left, right]);
-    const leftPath = left.toPaperObject();
-    const rightPath = right.toPaperObject();
-    const path = leftPath.unite(rightPath);
-    this.canvas.add(new Path(path.pathData, {
-      label: '范围' + (this.currentIndex++)
-    }));
-    this.canvas.remove(left);
-    this.canvas.remove(right);
-    this.canvas.discardActiveObject();
-    this.canvas.requestRenderAll();
+ 
+
+  getOpersBound(leftObject, rightObject) {
+    const leftObjectCoords = leftObject.getCoords();
+    const rightObjectCoords = rightObject.getCoords();
+    const { img } = this;
+    
+    const left = Math.round(Math.max(Math.min(leftObjectCoords[0].x, rightObjectCoords[0].x), img.left));
+    const top = Math.round(Math.max(Math.min(leftObjectCoords[0].y, rightObjectCoords[0].y), img.top));
+    const right = Math.round(Math.min( Math.max(leftObjectCoords[2].x, rightObjectCoords[2].x), img.width));
+    const bottom = Math.round(Math.min(Math.max(leftObjectCoords[2].y, rightObjectCoords[2].y), img.height));
+    return {
+      left,
+      top,
+      right,
+      bottom
+    }
     
   }
-  // 交集
-  intersect(left, right) {
-    const leftPath = left.toPaperObject();
-    const rightPath = right.toPaperObject();
-    const path = leftPath.intersect(rightPath);
 
-    this.canvas.remove(left);
-    this.canvas.remove(right);
-    if (path.pathData) {
-      this.canvas.add(new Path(path.pathData, {
-        label: '范围' + (this.currentIndex++)
-      }));
+   // 并集
+   union(leftObject, rightObject) {
+    const { left, top, right, bottom } = this.getOpersBound(leftObject, rightObject);
+
+    const mask = Array.from({ length: bottom - top }, () => new Uint8Array(right - left).fill(0));
+    console.log('left top', left, top, right, bottom);
+    for(let i=top; i<= bottom;i++) {
+      for(let j=left;j<=right;j++ ) {
+        const point = {
+          x: j,
+          y: i
+        };
+        if(leftObject.containPoint(point) || rightObject.containPoint(point)) {
+          // console.log('i-top', i-top, j-left);
+          mask[i - top][j - left] = 1;
+        }
+      }
     }
-    this.canvas.discardActiveObject();
-    this.canvas.requestRenderAll();
+    MyImage.createFromMatrix(mask, { left, top }).then((image) => {
+      image.left = left;
+      image.top = top;
+
+      this.canvas.add(image);
+      this.canvas.remove(leftObject);
+      this.canvas.remove(rightObject);
+      this.canvas.discardActiveObject();
+      this.canvas.requestRenderAll();
+    }).catch((e) => {
+      console.log('e', e);
+    })
+  }
+
+  // 交集
+  intersect(leftObject, rightObject) {
+    
+    const { left, top, right, bottom } = this.getOpersBound(leftObject, rightObject);
+    const mask = Array.from({ length: bottom - top }, () => new Uint8Array(right - left).fill(0));
+
+    for(let i=top; i<= bottom;i++) {
+      for(let j=left;j<=right;j++ ) {
+        const point = {
+          x: j,
+          y: i
+        };
+        if(leftObject.containPoint(point) && rightObject.containPoint(point)) {
+          mask[i - top][j - left] = 1;
+        }
+      }
+    }
+    MyImage.createFromMatrix(mask, { left, top }).then((image) => {
+      image.left = left;
+      image.top = top;
+      this.canvas.add(image);
+      this.canvas.remove(leftObject);
+      this.canvas.remove(rightObject);
+      this.canvas.discardActiveObject();
+      this.canvas.requestRenderAll();
+    }).catch((e) => {
+      console.log('e', e);
+    })
   }
 
   // 减去顶层
-  substract(left, right) {
-    const leftPath = left.toPaperObject();
-    const rightPath = right.toPaperObject();
-    const path = leftPath.subtract(rightPath);
-    this.canvas.remove(left);
-    this.canvas.remove(right);
-    if(path.pathData) {
-      this.canvas.add(new Path(path.pathData, {
-        label: '范围' + (this.currentIndex++)
-      }));
+  substract(leftObject, rightObject) {
+    const { left, top, right, bottom } = this.getOpersBound(leftObject, rightObject);
+    const mask = Array.from({ length: bottom - top }, () => new Uint8Array(right - left).fill(0));
+
+    for(let i=top; i<= bottom;i++) {
+      for(let j=left;j<=right;j++ ) {
+        const point = {
+          x: j,
+          y: i
+        };
+        if(leftObject.containPoint(point) && !rightObject.containPoint(point)) {
+          mask[i - top][j - left] = 1;
+        }
+      }
     }
-    this.canvas.discardActiveObject();
-    this.canvas.requestRenderAll();
+    MyImage.createFromMatrix(mask, { left, top }).then((image) => {
+      image.left = left;
+      image.top = top;
+      this.canvas.add(image);
+      this.canvas.remove(leftObject);
+      this.canvas.remove(rightObject);
+      this.canvas.discardActiveObject();
+      this.canvas.requestRenderAll();
+    }).catch((e) => {
+      console.log('e', e);
+    })
+
   }
 
   excludePaper(leftPath, rightPath) {
@@ -862,14 +934,14 @@ export default class Editor extends EventBus {
 
     if(path.pathData) {
       this.canvas.add(new Path(path.pathData, {
-        label: '范围' + (this.currentIndex++)
+        // label: '范围' + (this.currentIndex++)
       }));
     }
     const path2 = rightPath.subtract(leftPath);
     if(path2.pathData) {
       this.canvas.add(new Path(path2.pathData, 
         {
-          label: '范围' + (this.currentIndex++)
+          // label: '范围' + (this.currentIndex++)
         }
       ));
     }
@@ -878,12 +950,35 @@ export default class Editor extends EventBus {
   }
 
   // 对称差集
-  exclude(left, right) {
-    const leftPath = left.toPaperObject();
-    const rightPath = right.toPaperObject();
-    this.excludePaper(leftPath, rightPath)
-    this.canvas.remove(left);
-    this.canvas.remove(right);
+  exclude(leftObject, rightObject) {
+    const { left, top, right, bottom } = this.getOpersBound(leftObject, rightObject);
+    const mask = Array.from({ length: bottom - top }, () => new Uint8Array(right - left).fill(0));
+
+    for(let i=top; i<= bottom;i++) {
+      for(let j=left;j<=right;j++ ) {
+        const point = {
+          x: j,
+          y: i
+        };
+        const leftFlag = leftObject.containPoint(point);
+        const rightFlag = rightObject.containPoint(point);
+
+        if(leftFlag && !rightFlag || !leftFlag && rightFlag) {
+          mask[i - top][j - left] = 1;
+        }
+      }
+    }
+    MyImage.createFromMatrix(mask, { left, top }).then((image) => {
+      image.left = left;
+      image.top = top;
+      this.canvas.add(image);
+      this.canvas.remove(leftObject);
+      this.canvas.remove(rightObject);
+      this.canvas.discardActiveObject();
+      this.canvas.requestRenderAll();
+    }).catch((e) => {
+      console.log('e', e);
+    })
   }
 
   getObject(item) {
@@ -932,6 +1027,13 @@ export default class Editor extends EventBus {
         label: item.label,
       });
       return (ellipse);
+    } else if(item.type === 'image') {
+      const image = MyImage.createFromBase64(item.base64);
+      image.left = item.left;
+      image.top = item.top;
+      image.width = item.width;
+      image.height = item.height;
+      return image;
     }
   }
 
@@ -953,9 +1055,10 @@ export default class Editor extends EventBus {
       const scale = Math.round(Math.min(canvas.width / img.width, canvas.height / img.height) * 100) / 100;
       // console.log(canvas.width, canvas.height, img.width, img.height, scale);
       // 实际宽度
-      const width = img.width;
-      // 实际高度
-      const height = img.height;
+      // const width = img.width;
+      // // 实际高度
+      // const height = img.height;
+      img.isBackground = true;
       img.set({
         // left: (canvas.width - width) / 2,
         // top: (canvas.height - height) / 2,
@@ -984,6 +1087,7 @@ export default class Editor extends EventBus {
     const objects = this.getJSONObject();
     console.log('get mask object', objects);
     const mask = Array.from({ length: img.height }, () => new Uint8Array(img.width).fill(0));
+    
     objects.forEach((item) => {
       if(item.type === CREATE_TYPE.CIRCLE) {
         const circle = new Circle({

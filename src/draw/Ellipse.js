@@ -15,9 +15,9 @@ export default class LabeledEllipse extends Ellipse {
     if(this.isCreating) {
       return;
     }
-    ctx.fillStyle = 'rgb(0,0,0)';
-    ctx.font = "16px Arial";
-    ctx.fillText(this.label, -this.width / 2 + 4, -this.height / 2 + 16);
+    // ctx.fillStyle = 'rgb(0,0,0)';
+    // ctx.font = "16px Arial";
+    // ctx.fillText(this.label, -this.width / 2 + 4, -this.height / 2 + 16);
   }
 
   toPaperObject() {
@@ -66,6 +66,13 @@ export default class LabeledEllipse extends Ellipse {
     const dy = point.y - center.y;
     return (dx * dx) / (this.rx * this.rx) + (dy * dy) / (this.ry * this.ry) <= 1;
   }
+
+
+  containPoint(point) {
+    const center = this.getCenterPoint();
+    return this._containsPoint(point, center);
+  }
+  
 
   getMask(mask) {
     const boundingRect = this.getBoundingRect();

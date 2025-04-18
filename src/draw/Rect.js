@@ -40,9 +40,9 @@ export default class LabeledRect extends Rect {
     if(this.isCreating) {
       return;
     }
-    ctx.fillStyle = 'rgb(0,0,0)';
-    ctx.font = "16px Arial";
-    ctx.fillText(this.label, -this.width / 2 + 4, -this.height / 2 + 16);
+    // ctx.fillStyle = 'rgb(0,0,0)';
+    // ctx.font = "16px Arial";
+    // ctx.fillText(this.label, -this.width / 2 + 4, -this.height / 2 + 16);
   }
 
   toPaperObject() {
@@ -110,6 +110,10 @@ export default class LabeledRect extends Rect {
       return true;
     }
     return false;
+  }
+
+  containPoint(point) {
+    return this._containsPoint(point);
   }
 
   getMask(mask) {

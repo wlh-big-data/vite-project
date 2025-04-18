@@ -56,9 +56,10 @@ export default class LabeledPolygon extends Polygon {
     if(this.isCreating) {
       return;
     }
-    ctx.fillStyle = 'rgb(0,0,0)';
-    ctx.font = "16px Arial";
-    ctx.fillText(this.label, -this.width / 2, -this.height / 2 + 16);
+    // ctx.fillStyle = 'rgb(0,0,0)';
+    // ctx.font = "16px Arial";
+    // console.log('sss', this);
+    // ctx.fillText(this.label, -this.width / 2, -this.height / 2 + 16);
   }
 
   getPathData() {
@@ -159,6 +160,10 @@ export default class LabeledPolygon extends Polygon {
     }
     return inside;
 
+  }
+
+  containPoint(point) {
+    return this._containsPoint(point);
   }
 
   getMask(mask) {

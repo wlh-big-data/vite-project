@@ -14,7 +14,7 @@ export default function Draw(props) {
   useEffect(() => {
     const editor = new Editor({
       container: canvasDomRef.current,
-      imgUrl: '/grid.png',
+      imgUrl: '/IMAGE1_0024_13473.jpg',
     })
     editor.setCreateType(EditorType.RECT)
     editor.on('load', () => {

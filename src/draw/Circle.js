@@ -15,9 +15,9 @@ export default class LabeledCircle extends Circle {
     if(this.isCreating) {
       return;
     }
-    ctx.fillStyle = "rgb(0,0,0)"; // 设置文本颜色为黑色
-    ctx.font = "16px Arial"; // 设置字体样式为 Arial，大小为 16px
-    ctx.fillText(this.label, -this.radius + 4, -this.radius + 16); // 在圆形中心绘制标签文本
+    // ctx.fillStyle = "rgb(0,0,0)"; // 设置文本颜色为黑色
+    // ctx.font = "16px Arial"; // 设置字体样式为 Arial，大小为 16px
+    // ctx.fillText(this.label, -this.radius + 4, -this.radius + 16); // 在圆形中心绘制标签文本
   }
 
   toPaperObject() {
@@ -42,6 +42,12 @@ export default class LabeledCircle extends Circle {
     const dx = point.x - center.x;
     const dy = point.y - center.y;
     return dx * dx + dy * dy <= this.radius * this.radius;
+  }
+
+  containPoint(point) {
+    const center = this.getCenterPoint();
+    console.log('center', center);
+    return this._containsPoint(point, center);
   }
 
   getMask(mask) {
