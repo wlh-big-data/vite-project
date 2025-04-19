@@ -60,13 +60,7 @@ export default function Draw(props) {
           canvasDomRef.current.classList.add('canvas-big');
         }}>改变大小</button>
         <button onClick={() => {
-          editorRef.current.loadSVGFromString(`<?xml version="1.0" encoding="UTF-8"?>
-<svg width="631px" height="637px" viewBox="0 0 631 637" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <title>形状结合</title>
-    <g id="其他" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <path d="M625.5,5.5 L625.5,631.5 L5.5,631.5 L5.5,5.5 L625.5,5.5 Z M550.5,130.5 L92.5,130.5 L92.5,508.5 L550.5,508.5 L550.5,130.5 Z" id="形状结合" stroke="#979797" stroke-width="11" fill="#D8D8D8"></path>
-    </g>
-</svg>`);
+          editorRef.current.loadSVGFromString(`M625.5,5.5 L625.5,631.5 L5.5,631.5 L5.5,5.5 L625.5,5.5 Z M550.5,130.5 L92.5,130.5 L92.5,508.5 L550.5,508.5 L550.5,130.5 Z`);
         }}>加载svg</button>
         <button>保存</button>
         <button onClick={() => {

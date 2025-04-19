@@ -4,7 +4,7 @@ import EventBus from './EventBus';
 import LabeledPolygon from './Polygon';
 import LabeledRect from './Rect';
 import Polyline from './Polyline';
-// import Path from './Path';
+import Path from './Path';
 import Ellipse from "./Ellipse";
 import Circle from "./Circle";
 import MyImage from "./Image";
@@ -177,12 +177,17 @@ export default class Editor extends EventBus {
   }
 
   loadSVGFromString(svgString) {
-    loadSVGFromString(svgString, (objects, options) => {
-      console.log('objects', objects, options);
-      options.stroke = '#000';
-      options.strokeWidth = 1;
-      this.canvas.add(options);
-    })
+    // loadSVGFromString(svgString, (objects, options) => {
+    //   console.log('objects', objects, options);
+    //   options.stroke = '#000';
+    //   options.strokeWidth = 1;
+    //   this.canvas.add(options);
+    // })
+
+    const path = new Path(svgString);
+    this.canvas.add(path);
+    debugger;
+
     
   }
 
@@ -1165,12 +1170,12 @@ export default class Editor extends EventBus {
           top: item.top,
         });
         item.getMask(mask);
-      // }else if(item.type === CREATE_TYPE.PATH) {
-      //   const path = new Path(item.pathData, {
-      //     // left: item.left,
-      //     // top: item.top,
-      //   });
-      //   path.getMask(mask, { imgLeft: left, imgTop: top, imgScale: scale});
+      }else if(item.type === CREATE_TYPE.PATH) {
+        const path = new Path(item.pathData, {
+          // left: item.left,
+          // top: item.top,
+        });
+        path.getMask(mask, { imgLeft: left, imgTop: top, imgScale: scale});
       }else  if(item.type === CREATE_TYPE.ELLIPSE) {
         const itemJSON = item.toJSON();
         const ellipse = new Ellipse({

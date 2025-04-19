@@ -1,5 +1,5 @@
 import { Path, util } from 'fabric';
-import { Path as PaperPath, Point, Matrix } from 'paper';
+import { Path as PaperPath, Point, Matrix, CompoundPath } from 'paper';
 import { STYLE } from './constants';
 
 export default class LabeledPath extends Path {
@@ -19,7 +19,7 @@ export default class LabeledPath extends Path {
   }
 
   toPaperObject() {
-    const paper = new PaperPath(this.pathData);
+    const paper = new CompoundPath(this.pathData);
     paper.position = new Point(0, 0);
 
     const matrix = this.calcTransformMatrix();
@@ -48,6 +48,7 @@ export default class LabeledPath extends Path {
   
   getMask(mask, { imgLeft = 0, imgTop = 0, imgScale = 1}) {
     const paperPath = this.toPaperObject();
+    debugger;
     // const matrix = this.calcTransformMatrix();
     // console.log('matrx', matrix);
     // paperPath.transform(new Matrix(1/imgScale, 0, 0, 1/imgScale, 0, 0));
