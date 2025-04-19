@@ -1,5 +1,5 @@
 import { Rect, FabricText } from 'fabric';
-import { Path, Point, Size, Matrix } from 'paper';
+// import { Path, Point, Size, Matrix } from 'paper';
 import { STYLE } from './constants';
 
 Rect.prototype.setControlVisible('tl', true);
@@ -45,35 +45,35 @@ export default class LabeledRect extends Rect {
     // ctx.fillText(this.label, -this.width / 2 + 4, -this.height / 2 + 16);
   }
 
-  toPaperObject() {
-    // const matrix = this.calcTransformMatrix();
-    // console.log('matrix', matrix);
-    // if (this.group) {
-    //   const square = new Path.Rectangle(this.group.left + this.group.width * this.group.scaleX / 2 + this.left,
-    //     this.group.top + this.group.height * this.group.scaleY / 2 + this.top, this.width * this.scaleX, this.height * this.scaleY);
-    //   return square;
-    // } else {
-    //   var square = new Path.Rectangle(this.left, this.top, this.width * this.scaleX, this.height * this.scaleY);
-    //   return square;
-    // }
-    const paper = new Path.Rectangle(0, 0, this.width, this.height);
-    const matrix = this.calcTransformMatrix();
-    // const center = this.getCenterPoint();
-    // const ownMathrix = this.calcOwnMatrix();
+  // toPaperObject() {
+  //   // const matrix = this.calcTransformMatrix();
+  //   // console.log('matrix', matrix);
+  //   // if (this.group) {
+  //   //   const square = new Path.Rectangle(this.group.left + this.group.width * this.group.scaleX / 2 + this.left,
+  //   //     this.group.top + this.group.height * this.group.scaleY / 2 + this.top, this.width * this.scaleX, this.height * this.scaleY);
+  //   //   return square;
+  //   // } else {
+  //   //   var square = new Path.Rectangle(this.left, this.top, this.width * this.scaleX, this.height * this.scaleY);
+  //   //   return square;
+  //   // }
+  //   const paper = new Path.Rectangle(0, 0, this.width, this.height);
+  //   const matrix = this.calcTransformMatrix();
+  //   // const center = this.getCenterPoint();
+  //   // const ownMathrix = this.calcOwnMatrix();
     
-    console.log('paper object matrix', matrix);
-    // 转换为 Paper.js 矩阵格式 [a, b, c, d, tx, ty]
-    const paperMatrix = new Matrix(
-      matrix[0], matrix[1],
-      matrix[2], matrix[3],
+  //   console.log('paper object matrix', matrix);
+  //   // 转换为 Paper.js 矩阵格式 [a, b, c, d, tx, ty]
+  //   const paperMatrix = new Matrix(
+  //     matrix[0], matrix[1],
+  //     matrix[2], matrix[3],
 
-      matrix[4] - this.width/2 * matrix[0],  // X 轴中心补偿
-      matrix[5] - this.height/2 * matrix[3] 
-    );
-    paper.transform(paperMatrix);
-    return paper;
+  //     matrix[4] - this.width/2 * matrix[0],  // X 轴中心补偿
+  //     matrix[5] - this.height/2 * matrix[3] 
+  //   );
+  //   paper.transform(paperMatrix);
+  //   return paper;
 
-  }
+  // }
 
   expand(expand = 10) {
     console.log('expand', expand);

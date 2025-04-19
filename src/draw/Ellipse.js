@@ -1,5 +1,5 @@
 import { Ellipse } from 'fabric';
-import { Path, Point, Size, Matrix } from 'paper';
+// import { Path, Point, Size, Matrix } from 'paper';
 import { STYLE } from './constants';
 
 export default class LabeledEllipse extends Ellipse {
@@ -20,24 +20,24 @@ export default class LabeledEllipse extends Ellipse {
     // ctx.fillText(this.label, -this.width / 2 + 4, -this.height / 2 + 16);
   }
 
-  toPaperObject() {
-    const paper = new Path.Ellipse({
-      center: new Point(0, 0),
-      radius: new Size(this.width / 2, this.height / 2),
-      fillColor: this.fill,
-      strokeColor: this.stroke,
-      strokeWidth: this.strokeWidth,
-    });
-    const matrix = this.calcTransformMatrix();
-    const paperMatrix = new Matrix(
-      matrix[0], matrix[1],
-      matrix[2], matrix[3],
-      matrix[4],
-      matrix[5]
-    );
-    paper.transform(paperMatrix);
-    return paper;
-  }
+  // toPaperObject() {
+  //   const paper = new Path.Ellipse({
+  //     center: new Point(0, 0),
+  //     radius: new Size(this.width / 2, this.height / 2),
+  //     fillColor: this.fill,
+  //     strokeColor: this.stroke,
+  //     strokeWidth: this.strokeWidth,
+  //   });
+  //   const matrix = this.calcTransformMatrix();
+  //   const paperMatrix = new Matrix(
+  //     matrix[0], matrix[1],
+  //     matrix[2], matrix[3],
+  //     matrix[4],
+  //     matrix[5]
+  //   );
+  //   paper.transform(paperMatrix);
+  //   return paper;
+  // }
 
   expand(expand = 10) {
     console.log('expand', expand);

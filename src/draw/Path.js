@@ -22,17 +22,17 @@ export default class LabeledPath extends Path {
     const paper = new CompoundPath(this.pathData);
     paper.position = new Point(0, 0);
 
-    const matrix = this.calcTransformMatrix();
-    console.log('matrix', matrix);
-    const paperMatrix = new Matrix(
-      matrix[0], matrix[1],
-      matrix[2], matrix[3],
-      matrix[4],
-      matrix[5]
-    );
-    paper.transform(paperMatrix);
-    return paper;
-  }
+  //   const matrix = this.calcTransformMatrix();
+  //   console.log('matrix', matrix);
+  //   const paperMatrix = new Matrix(
+  //     matrix[0], matrix[1],
+  //     matrix[2], matrix[3],
+  //     matrix[4],
+  //     matrix[5]
+  //   );
+  //   paper.transform(paperMatrix);
+  //   return paper;
+  // }
 
   toJSON() {
     const paper = this.toPaperObject();

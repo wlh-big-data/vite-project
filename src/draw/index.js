@@ -4,7 +4,7 @@ import EventBus from './EventBus';
 import LabeledPolygon from './Polygon';
 import LabeledRect from './Rect';
 import Polyline from './Polyline';
-import Path from './Path';
+// import Path from './Path';
 import Ellipse from "./Ellipse";
 import Circle from "./Circle";
 import MyImage from "./Image";
@@ -716,7 +716,11 @@ export default class Editor extends EventBus {
     // if(options.target && options.target.type !== 'image') {
     //   return;
     // }
+<<<<<<< HEAD
     if (this.createType !== CREATE_TYPE.RECT || !this.checkImgBounds(options) || this.clickOnControls(options)) {
+=======
+    if (this.createType !== CREATE_TYPE.RECT || !this.checkImgBounds(options)) {
+>>>>>>> d8c5146df38409be9cead03447f8973a6fe278a0
       return;
     }
     
@@ -1154,7 +1158,7 @@ export default class Editor extends EventBus {
           top: jsonObject.top,
           radius: jsonObject.radius,
         });
-        circle.getMask(mask);
+        item.getMask(mask);
 
       }else if(item.type === CREATE_TYPE.RECT) {
         const rect = new LabeledRect({
