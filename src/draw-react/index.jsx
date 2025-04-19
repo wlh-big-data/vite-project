@@ -106,7 +106,8 @@ export default function Draw(props) {
           //   {"type":"rect","width":51,"height":50,"left":49,"top":50,"label":"rect"},
           //   {"type":"circle","radius":26,"left":148,"top":99,"label":"circle"},
           //   {"type":"ellipse","rx":24,"ry":48,"left":201,"top":153,"label":"ellipse"}]);
-          editorRef.current.loadJSON( [{"type":"path","label":"范围3","pathData":"M519.5,247.5h130v140h-80v150h-201v-208h151z","left":368,"top":247}]);
+          // editorRef.current.loadJSON( [{"type":"path","label":"范围3","pathData":"M519.5,247.5h130v140h-80v150h-201v-208h151z","left":368,"top":247}]);
+          editorRef.current.loadJSON([{"left":77,"top":45,"width":117,"height":58,"base64":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHUAAAA6CAYAAACOChYFAAAAAXNSR0IArs4c6QAAASxJREFUeF7t1sERwjAMBECnJvovgZqggcDjXtJl+XtGd2vFXMevroGrLtGPQJ9zXk/JCrVQGirUvQ34/O61+zk5VKirG/Cmrua7Hx4q1L0NeFP32vmjdM7x+S28wFCh7m3Am7rXzpvqTS28vVChrm7Am7qa7374R6E+KWzhXb2NdEHto4baZ3qgQi1soDCSTYVa2EBhJJsKtbCBwkg2FWphA4WRbCrUwgYKI9lUqIUNFEayqVALGyiMZFOhFjZQGMmmQi1s4E+k65z3xsQ2FerGe5vPbFPz7saehDqWJh8Mat7d2JNQx9Lkg0HNuxt7EupYmnwwqHl3Y09CHUuTDwY1727sSahjafLBoObdjT0JdSxNPhjUvLuxJ6GOpckHg5p3N/Yk1LE0+WBbUb9fNVOnnTM6nQAAAABJRU5ErkJggg==","type":"image"},{"type":"path","label":"范围3","pathData":"M519.5,247.5h130v140h-80v150h-201v-208h151z"},{"left":40,"top":4,"width":81,"height":36,"base64":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFEAAAAkCAYAAADxYNZEAAAAAXNSR0IArs4c6QAAAKtJREFUaEPt1osJg0AURcG3NaX/ElKTKUAIiEfMZyzgiONd2DU3PNvM44bXXvbKdVn5TRhioA4R4k7AcQ5GARFiIBAkLBFiIBAkLLFA/LU7W2ByOLEgHjbb3xMhQjwvEBQcZ4iBQJCwRIiBQJCwRIiBQJCwRIiBQJCwRIiBQJCwxH9FXDPP4NuzxFcuEWLw/yFCDASChCVCDASChCVCDASChCVCDASCxKct8QXEHjQHJwHx3wAAAABJRU5ErkJggg==","type":"image"}])
         }}>加载JSON</button>
         <button onClick={() => {
           const objects = editorRef.current.getJSONObject();

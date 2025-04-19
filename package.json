@@ -33,6 +33,7 @@
     "jest": "^27.4.3",
     "jest-resolve": "^27.4.2",
     "jest-watch-typeahead": "^1.0.0",
+    "konva": "^9.3.20",
     "mini-css-extract-plugin": "^2.4.5",
     "paper": "^0.12.18",
     "photo-editor": "file:",

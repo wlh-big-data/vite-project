@@ -14,20 +14,33 @@ export default function Paper() {
     var square = new Path.Rectangle(topLeft, rectSize);
     
     // Make a ring using subtraction of two circles:
-    var inner = new Path.Circle({
-      center: {
-        x: 100,
-        y: 100,
-      },
-      radius: 100,
-      // parent: originals,
-      fillColor: 'white'
-    });
+// Make a ring using subtraction of two circles:
+var inner = new Path.Circle({
+  center: view.center,
+  radius: 100,
+  // parent: originals,
+  // fillColor: 'white'
+});
+
+var outer = new Path.Circle({
+  center: view.center,
+  radius: 140,
+  // parent: originals,
+  // fillColor: 'white'
+});
+
+var ring = outer.subtract(inner);
+const rect = new Path.Rectangle({
+  topLeft: view.center,
+  size: new Size(100, 100),
+  fillColor: 'yellow'
+});
+
+// ring.exclude(rect);
 
     // var ring = square.intersect(inner);
     // ar ring = square.unite(inner);
     // var ring = square.exclude(inner);
-    var ring = square.subtract(inner);
     // var ring = square.exclude(inner);
     // ring.parent = showGroups;
     ring.fillColor = 'yellow';

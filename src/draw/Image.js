@@ -37,7 +37,6 @@ export default class MyImage extends FabricImage {
           }
         }
       }
-      debugger;
       // 将图像数据绘制到canvas
       ctx.putImageData(imageData, 0, 0);
       const imageSrc = canvas.toDataURL('image/png');
@@ -61,7 +60,7 @@ export default class MyImage extends FabricImage {
             canvas.height = height;
         
             // 创建图像数据
-            canvas.drawImage(image, 0, 0);
+            ctx.drawImage(image._element, 0, 0);
             const imageData = ctx.getImageData(0, 0, width, height);
             const matrix = Array.from({ length: height }, () => new Uint8Array(width).fill(0));
             for (let y = 0; y < height; y++) {
@@ -78,15 +77,38 @@ export default class MyImage extends FabricImage {
         });
     }
 
+    getMask(mask) {
+        const { left, top, width, height, matrix } = this;
+        for(let i=top;i<top+height;i++) {
+            for(let j=left;j<left+width;j++) {
+                if(matrix[i-top][j-left] === 1) {
+                    mask[i][j] = 1;
+                }
+            }
+        }
+
+    }
+
     toJSON() {
         return {
             left: this.left,
             top: this.top,
             width: this.width,
             height: this.height,
-            src: this.imageSrc,
+            base64: this.imageSrc,
             type: this.type,
             // matrix: this.matrix
         }
+    }
+
+    containPoint(point) {
+        const { matrix } = this;
+        const [ left ] = this.getCoords();
+        const col =  Math.round(point.x - left.x);
+        const row = Math.round(point.y - left.y);
+        if(matrix[row] && matrix[row][col] === 1) {
+            return true;
+         }
+         return false;
     }
   }

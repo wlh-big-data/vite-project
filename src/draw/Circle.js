@@ -1,5 +1,5 @@
 import { Circle } from "fabric";
-import { Path } from "paper";
+// import { Path } from "paper";
 import { STYLE } from './constants';
 
 export default class LabeledCircle extends Circle {
@@ -20,12 +20,12 @@ export default class LabeledCircle extends Circle {
     // ctx.fillText(this.label, -this.radius + 4, -this.radius + 16); // 在圆形中心绘制标签文本
   }
 
-  toPaperObject() {
-    const paper = new Path.Circle(0, 0, this.radius); // 创建 Paper.js 圆形对象
-    const matrix = this.calcTransformMatrix(); // 获取 Fabric 对象的变换矩
-    paper.matrix = matrix; // 将 Paper.js 圆形对象的变换矩阵
-    return paper; 
-  }
+  // toPaperObject() {
+  //   const paper = new Path.Circle(0, 0, this.radius); // 创建 Paper.js 圆形对象
+  //   const matrix = this.calcTransformMatrix(); // 获取 Fabric 对象的变换矩
+  //   paper.matrix = matrix; // 将 Paper.js 圆形对象的变换矩阵
+  //   return paper; 
+  // }
 
   toJSON() {
     const radius = Math.round(this.radius * Math.max(this.scaleX, this.scaleY));

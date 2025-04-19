@@ -4,7 +4,7 @@ import EventBus from './EventBus';
 import LabeledPolygon from './Polygon';
 import LabeledRect from './Rect';
 import Polyline from './Polyline';
-import Path from './Path';
+// import Path from './Path';
 import Ellipse from "./Ellipse";
 import Circle from "./Circle";
 import MyImage from "./Image";
@@ -19,6 +19,7 @@ const CREATE_TYPE = {
   RECT: 'rect',
   PATH: 'path',
   NONE: 'none',
+  IMAGE: 'image',
 }
 
 export const EditorType = CREATE_TYPE;
@@ -91,7 +92,7 @@ export default class Editor extends EventBus {
     this.drawingCircle = this.drawingCircle.bind(this);
 
     this.getSelection = this.getSelection.bind(this);
-    this.addPath = this.addPath.bind(this);
+    // this.addPath = this.addPath.bind(this);
 
     document.addEventListener('keydown', this.keydown);
 
@@ -199,14 +200,14 @@ export default class Editor extends EventBus {
     if(objects.length === 0) {
       this.canvas.add(rect);
     }else {
-      console.log('object', objects);
-      let result = objects[0].toPaperObject();
-      objects.forEach((item, index) => {
+      // console.log('object', objects);
+      // let result = objects[0].toPaperObject();
+      // objects.forEach((item, index) => {
 
-        if(index > 0) {
-          result = result.unite(item.toPaperObject());
-        }
-      });
+      //   if(index > 0) {
+      //     result = result.unite(item.toPaperObject());
+      //   }
+      // });
       // const rectPaper = rect.toPaperObject();
       // this.excludePaper(rectPaper, result);
       // const path = rectPaper.subtract(result);
@@ -224,16 +225,16 @@ export default class Editor extends EventBus {
     this.canvas.requestRenderAll();
   }
 
-  addPath(left, right, pathData) {
-    this.canvas.remove(left);
-    this.canvas.remove(right);
+  // addPath(left, right, pathData) {
+  //   this.canvas.remove(left);
+  //   this.canvas.remove(right);
 
-    const path = new Path(pathData, {
-      // label: '范围' + (this.currentIndex++)
-    });
-    this.canvas.add(path);
-    this.canvas.renderAll();
-  }
+  //   const path = new Path(pathData, {
+  //     // label: '范围' + (this.currentIndex++)
+  //   });
+  //   this.canvas.add(path);
+  //   this.canvas.renderAll();
+  // }
 
   removeObjects() {
     const objects = this.canvas.getObjects();
@@ -425,9 +426,9 @@ export default class Editor extends EventBus {
     if(this.readonly) {
       return;
     }
-    if(options.target && options.target.type !== 'image') {
-      return;
-    }
+    // if(options.target && options.target.type !== 'image') {
+    //   return;
+    // }
     if (!(this.createType === CREATE_TYPE.CIRCLE && this.checkImgBounds(options))) {
       return;
     }
@@ -511,9 +512,9 @@ export default class Editor extends EventBus {
     if(this.readonly) {
       return;
     }
-    if(options.target && options.target.type !== 'image') {
-      return;
-    }
+    // if(options.target && options.target.type !== 'image') {
+    //   return;
+    // }
     if (this.createType !== CREATE_TYPE.ELLIPSE || !this.checkImgBounds(options)) {
       return;
     }
@@ -689,9 +690,10 @@ export default class Editor extends EventBus {
     if(this.readonly) {
       return;
     }
-    if(options.target && options.target.type !== 'image') {
-      return;
-    }
+    console.log('options', options);
+    // if(options.target && options.target.type !== 'image') {
+    //   return;
+    // }
     if (this.createType !== CREATE_TYPE.RECT || !this.checkImgBounds(options)) {
       return;
     }
@@ -842,7 +844,8 @@ export default class Editor extends EventBus {
     const { left, top, right, bottom } = this.getOpersBound(leftObject, rightObject);
 
     const mask = Array.from({ length: bottom - top }, () => new Uint8Array(right - left).fill(0));
-    console.log('left top', left, top, right, bottom);
+    console.log('left ttop right bottom', left, top, right, bottom);
+    let str = '';
     for(let i=top; i<= bottom;i++) {
       for(let j=left;j<=right;j++ ) {
         const point = {
@@ -850,11 +853,13 @@ export default class Editor extends EventBus {
           y: i
         };
         if(leftObject.containPoint(point) || rightObject.containPoint(point)) {
-          // console.log('i-top', i-top, j-left);
-          mask[i - top][j - left] = 1;
+          str += i + ',' + j + ';';
+          
+          mask[i-top] && (mask[i - top][j - left] = 1);
         }
       }
     }
+    console.log('str', str);
     MyImage.createFromMatrix(mask, { left, top }).then((image) => {
       image.left = left;
       image.top = top;
@@ -929,31 +934,31 @@ export default class Editor extends EventBus {
 
   }
 
-  excludePaper(leftPath, rightPath) {
-    const path = leftPath.subtract(rightPath);
+  // excludePaper(leftPath, rightPath) {
+  //   const path = leftPath.subtract(rightPath);
 
-    if(path.pathData) {
-      this.canvas.add(new Path(path.pathData, {
-        // label: '范围' + (this.currentIndex++)
-      }));
-    }
-    const path2 = rightPath.subtract(leftPath);
-    if(path2.pathData) {
-      this.canvas.add(new Path(path2.pathData, 
-        {
-          // label: '范围' + (this.currentIndex++)
-        }
-      ));
-    }
-    this.canvas.discardActiveObject();
-    this.canvas.requestRenderAll();
-  }
+  //   if(path.pathData) {
+  //     this.canvas.add(new Path(path.pathData, {
+  //       // label: '范围' + (this.currentIndex++)
+  //     }));
+  //   }
+  //   const path2 = rightPath.subtract(leftPath);
+  //   if(path2.pathData) {
+  //     this.canvas.add(new Path(path2.pathData, 
+  //       {
+  //         // label: '范围' + (this.currentIndex++)
+  //       }
+  //     ));
+  //   }
+  //   this.canvas.discardActiveObject();
+  //   this.canvas.requestRenderAll();
+  // }
 
   // 对称差集
   exclude(leftObject, rightObject) {
     const { left, top, right, bottom } = this.getOpersBound(leftObject, rightObject);
     const mask = Array.from({ length: bottom - top }, () => new Uint8Array(right - left).fill(0));
-
+    console.log('left top', left, top, right, bottom);
     for(let i=top; i<= bottom;i++) {
       for(let j=left;j<=right;j++ ) {
         const point = {
@@ -1011,13 +1016,13 @@ export default class Editor extends EventBus {
         label: item.label,
       });
       return (polygon);
-    } else if(item.type === CREATE_TYPE.PATH) {
-      const path = new Path(item.pathData, {
-        left: item.left,
-        top: item.top,
-        label: item.label,
-      });
-      return (path);
+    // } else if(item.type === CREATE_TYPE.PATH) {
+    //   const path = new Path(item.pathData, {
+    //     left: item.left,
+    //     top: item.top,
+    //     label: item.label,
+    //   });
+    //   return (path);
     } else if(item.type === CREATE_TYPE.ELLIPSE) {
       const ellipse = new Ellipse({
         left: (item.left ) ,
@@ -1028,12 +1033,14 @@ export default class Editor extends EventBus {
       });
       return (ellipse);
     } else if(item.type === 'image') {
-      const image = MyImage.createFromBase64(item.base64);
-      image.left = item.left;
-      image.top = item.top;
-      image.width = item.width;
-      image.height = item.height;
-      return image;
+      return MyImage.createFromBase64(item.base64).then((image) => {
+        image.left = item.left;
+        image.top = item.top;
+        image.width = item.width;
+        image.height = item.height;
+        return image;
+      });
+      
     }
   }
 
@@ -1042,7 +1049,13 @@ export default class Editor extends EventBus {
       console.log('item', item);
       const object = this.getObject(item);
       if (object) {
-        this.canvas.add(object);
+        if(object.then) {
+          object.then((object) => {
+            this.canvas.add(object);
+          })
+        }else {
+          this.canvas.add(object);
+        }
       }
     })
   }
@@ -1083,8 +1096,8 @@ export default class Editor extends EventBus {
     const { canvas, img } = this;
     const { left, top } = img;
     const { scale } = this;
-    // const objects = canvas.getObjects().filter(obj => obj.type !== 'image');
-    const objects = this.getJSONObject();
+    const objects = canvas.getObjects().filter(obj => !obj.isBackground);
+    // const objects = this.getJSONObject();
     console.log('get mask object', objects);
     const mask = Array.from({ length: img.height }, () => new Uint8Array(img.width).fill(0));
     
@@ -1095,7 +1108,7 @@ export default class Editor extends EventBus {
           top: item.top,
           radius: item.radius,
         });
-        circle.getMask(mask);
+        item.getMask(mask);
 
       }else if(item.type === CREATE_TYPE.RECT) {
         const rect = new LabeledRect({
@@ -1104,27 +1117,30 @@ export default class Editor extends EventBus {
           width: item.width,
           height: item.height,
         });
-        rect.getMask(mask);
+        item.getMask(mask);
       }else if(item.type === CREATE_TYPE.POLYGON) {
         const polygon = new LabeledPolygon(item.points, {
           left: item.left,
           top: item.top,
         });
-        polygon.getMask(mask);
-      }else if(item.type === CREATE_TYPE.PATH) {
-        const path = new Path(item.pathData, {
-          // left: item.left,
-          // top: item.top,
-        });
-        path.getMask(mask, { imgLeft: left, imgTop: top, imgScale: scale});
+        item.getMask(mask);
+      // }else if(item.type === CREATE_TYPE.PATH) {
+      //   const path = new Path(item.pathData, {
+      //     // left: item.left,
+      //     // top: item.top,
+      //   });
+      //   path.getMask(mask, { imgLeft: left, imgTop: top, imgScale: scale});
       }else  if(item.type === CREATE_TYPE.ELLIPSE) {
+        const itemJSON = item.toJSON();
         const ellipse = new Ellipse({
-          left: item.left,
-          top: item.top,
-          rx: item.rx,
-          ry: item.ry,
+          left: itemJSON.left,
+          top: itemJSON.top,
+          rx: itemJSON.rx,
+          ry: itemJSON.ry,
         });
         ellipse.getMask(mask);
+      } else if(item.type === CREATE_TYPE.IMAGE) {
+        item.getMask(mask)
       }
     })
     return {

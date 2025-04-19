@@ -18,21 +18,21 @@ export default class LabeledPath extends Path {
     // ctx.fillText(this.label, -this.width / 2 + 4, -this.height / 2 + 16);
   }
 
-  toPaperObject() {
-    const paper = new PaperPath(this.pathData);
-    paper.position = new Point(0, 0);
+  // toPaperObject() {
+  //   const paper = new PaperPath(this.pathData);
+  //   paper.position = new Point(0, 0);
 
-    const matrix = this.calcTransformMatrix();
-    console.log('matrix', matrix);
-    const paperMatrix = new Matrix(
-      matrix[0], matrix[1],
-      matrix[2], matrix[3],
-      matrix[4],
-      matrix[5]
-    );
-    paper.transform(paperMatrix);
-    return paper;
-  }
+  //   const matrix = this.calcTransformMatrix();
+  //   console.log('matrix', matrix);
+  //   const paperMatrix = new Matrix(
+  //     matrix[0], matrix[1],
+  //     matrix[2], matrix[3],
+  //     matrix[4],
+  //     matrix[5]
+  //   );
+  //   paper.transform(paperMatrix);
+  //   return paper;
+  // }
 
   toJSON() {
     const paper = this.toPaperObject();
