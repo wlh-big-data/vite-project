@@ -20,6 +20,11 @@ export default function Draw(props) {
     editor.on('load', () => {
       console.log('editor load', editor);
     })
+
+    const resizeObserver = new ResizeObserver(() => {
+      editor.resize(canvasDomRef.current.clientWidth, canvasDomRef.current.clientHeight);
+    });
+    resizeObserver.observe(canvasDomRef.current);
     // editor.on('click', (options) => {
     //   editor.addPolygon([{
     //     x: 0,
@@ -51,6 +56,18 @@ export default function Draw(props) {
           setEdit(type);
           editorRef.current.setCreateType(type);
         }}>{edit !== EditorType.NONE ? '编辑' : '查看'}</button>
+        <button onClick={() => {
+          canvasDomRef.current.classList.add('canvas-big');
+        }}>改变大小</button>
+        <button onClick={() => {
+          editorRef.current.loadSVGFromString(`<?xml version="1.0" encoding="UTF-8"?>
+<svg width="631px" height="637px" viewBox="0 0 631 637" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>形状结合</title>
+    <g id="其他" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <path d="M625.5,5.5 L625.5,631.5 L5.5,631.5 L5.5,5.5 L625.5,5.5 Z M550.5,130.5 L92.5,130.5 L92.5,508.5 L550.5,508.5 L550.5,130.5 Z" id="形状结合" stroke="#979797" stroke-width="11" fill="#D8D8D8"></path>
+    </g>
+</svg>`);
+        }}>加载svg</button>
         <button>保存</button>
         <button onClick={() => {
           setEdit(EditorType.RECT);
@@ -106,7 +123,8 @@ export default function Draw(props) {
           //   {"type":"rect","width":51,"height":50,"left":49,"top":50,"label":"rect"},
           //   {"type":"circle","radius":26,"left":148,"top":99,"label":"circle"},
           //   {"type":"ellipse","rx":24,"ry":48,"left":201,"top":153,"label":"ellipse"}]);
-          editorRef.current.loadJSON( [{"type":"path","label":"范围3","pathData":"M519.5,247.5h130v140h-80v150h-201v-208h151z","left":368,"top":247}]);
+          // editorRef.current.loadJSON( [{"type":"path","label":"范围3","pathData":"M519.5,247.5h130v140h-80v150h-201v-208h151z","left":368,"top":247}]);
+          editorRef.current.loadJSON([{"left":77,"top":45,"width":117,"height":58,"base64":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHUAAAA6CAYAAACOChYFAAAAAXNSR0IArs4c6QAAASxJREFUeF7t1sERwjAMBECnJvovgZqggcDjXtJl+XtGd2vFXMevroGrLtGPQJ9zXk/JCrVQGirUvQ34/O61+zk5VKirG/Cmrua7Hx4q1L0NeFP32vmjdM7x+S28wFCh7m3Am7rXzpvqTS28vVChrm7Am7qa7374R6E+KWzhXb2NdEHto4baZ3qgQi1soDCSTYVa2EBhJJsKtbCBwkg2FWphA4WRbCrUwgYKI9lUqIUNFEayqVALGyiMZFOhFjZQGMmmQi1s4E+k65z3xsQ2FerGe5vPbFPz7saehDqWJh8Mat7d2JNQx9Lkg0HNuxt7EupYmnwwqHl3Y09CHUuTDwY1727sSahjafLBoObdjT0JdSxNPhjUvLuxJ6GOpckHg5p3N/Yk1LE0+WBbUb9fNVOnnTM6nQAAAABJRU5ErkJggg==","type":"image"},{"type":"path","label":"范围3","pathData":"M519.5,247.5h130v140h-80v150h-201v-208h151z"},{"left":40,"top":4,"width":81,"height":36,"base64":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFEAAAAkCAYAAADxYNZEAAAAAXNSR0IArs4c6QAAAKtJREFUaEPt1osJg0AURcG3NaX/ElKTKUAIiEfMZyzgiONd2DU3PNvM44bXXvbKdVn5TRhioA4R4k7AcQ5GARFiIBAkLBFiIBAkLLFA/LU7W2ByOLEgHjbb3xMhQjwvEBQcZ4iBQJCwRIiBQJCwRIiBQJCwRIiBQJCwRIiBQJCwxH9FXDPP4NuzxFcuEWLw/yFCDASChCVCDASChCVCDASChCVCDASCxKct8QXEHjQHJwHx3wAAAABJRU5ErkJggg==","type":"image"}])
         }}>加载JSON</button>
         <button onClick={() => {
           const objects = editorRef.current.getJSONObject();

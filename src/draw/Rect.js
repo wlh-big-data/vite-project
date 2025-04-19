@@ -113,7 +113,7 @@ export default class LabeledRect extends Rect {
   }
 
   containPoint(point) {
-    return this._containsPoint(point);
+    return super.containsPoint(point);
   }
 
   getMask(mask) {

@@ -163,7 +163,9 @@ export default class LabeledPolygon extends Polygon {
   }
 
   containPoint(point) {
-    return this._containsPoint(point);
+    const paperPath = this.toPaperObject();
+    const paperPoint = new Point(point.x, point.y);
+    return paperPath.contains(paperPoint);
   }
 
   getMask(mask) {
